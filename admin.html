@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Create Quiz</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f5f7fb;
+    padding:30px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+h1{
+    margin-bottom:25px;
+    color:#111827;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+    color:#374151;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:14px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    margin-bottom:20px;
+    font-size:15px;
+}
+
+textarea{
+    min-height:500px;
+    resize:vertical;
+    font-family:monospace;
+}
+
+.actions{
+    display:flex;
+    gap:15px;
+}
+
+button{
+    border:none;
+    padding:14px 24px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.save-btn{
+    background:#2563eb;
+    color:white;
+}
+
+.preview-btn{
+    background:#e5e7eb;
+}
+
+.message{
+    margin-top:15px;
+    font-weight:bold;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>📝 Create Quiz</h1>
+
+<label>
+Quiz Title
+</label>
+
+<input
+type="text"
+id="title"
+placeholder="Electronics MCQ Quiz - Set 3">
+
+<label>
+Subject
+</label>
+
+<select id="subject">
+
+<option value="">
+Select Subject
+</option>
+
+<option>
+Electrical
+</option>
+
+<option>
+Electronics
+</option>
+
+<option>
+Mechanical
+</option>
+
+<option>
+Civil
+</option>
+
+<option>
+Mathematics
+</option>
+
+<option>
+Mechanics
+</option>
+
+<option>
+Programming
+</option>
+
+</select>
+
+<label>
+Questions JSON
+</label>
+
+<textarea
+id="questions"
+placeholder='Paste questions array here...
+
+[
+  {
+    "id":1,
+    "question":"Question here",
+    "options":{
+      "A":"Option A",
+      "B":"Option B",
+      "C":"Option C",
+      "D":"Option D"
+    },
+    "answer":"A"
+  }
+]'
+></textarea>
+
+<div class="actions">
+
+<button
+class="preview-btn"
+onclick="previewQuiz()">
+
+Preview JSON
+
+</button>
+
+<button
+class="save-btn"
+onclick="saveQuiz()">
+
+Save Quiz
+
+</button>
+
+</div>
+
+<div id="message"
+class="message"></div>
+
+</div>
+
+</div>
+
+<script>
+const API_URL ="http://localhost:3000/api";
+
+const token = localStorage.getItem("token");
+
+if(!token){
+    window.location.href = "home.html";
+}
+
+function buildQuizObject(){
+
+    return {
+
+        title:
+        document.getElementById(
+            "title"
+        ).value,
+
+        subject:
+        document.getElementById(
+            "subject"
+        ).value,
+
+        questions:
+        JSON.parse(
+            document.getElementById(
+                "questions"
+            ).value
+        )
+
+    };
+
+}
+
+function previewQuiz(){
+
+    try{
+
+        const quiz =
+        buildQuizObject();
+
+        console.log(quiz);
+
+        alert(
+            JSON.stringify(
+                quiz,
+                null,
+                2
+            )
+        );
+
+    }catch(err){
+
+        alert(
+            "Invalid JSON"
+        );
+
+    }
+
+}
+
+async function saveQuiz(){
+
+    try{
+
+        const quiz =
+        buildQuizObject();
+
+        console.log(quiz);
+
+        
+
+        
+        await fetch(
+            API_URL +
+            "/quiz",
+            {
+                
+                method:"POST",
+                headers:{
+                    Authorization:
+                    "Bearer " + token,
+                    "Content-Type":"application/json",
+                },
+                body:JSON.stringify(
+                    quiz
+                )
+            }
+        );
+
+        document.getElementById(
+            "message"
+        ).innerHTML =
+        "✅ Quiz saved Successfully";
+        
+
+    }catch(err){
+
+        document.getElementById(
+            "message"
+        ).innerHTML =
+        "❌ Invalid JSON";
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

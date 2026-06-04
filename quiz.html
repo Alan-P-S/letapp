@@ -1,0 +1,615 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Quiz Attempt</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:
+    radial-gradient(circle at top,
+    #1e293b,
+    #0f172a 65%);
+    min-height:100vh;
+    padding:25px;
+    color:white;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+.header{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    padding:25px;
+    margin-bottom:25px;
+}
+
+#quizTitle{
+    font-size:28px;
+    margin-bottom:8px;
+}
+
+.subject{
+    color:#60a5fa;
+    font-weight:600;
+}
+
+.question-card{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    padding:30px;
+}
+
+.question-count{
+    color:#94a3b8;
+    margin-bottom:15px;
+    font-size:15px;
+}
+
+.question{
+    font-size:24px;
+    line-height:1.5;
+    margin-bottom:25px;
+}
+
+.option{
+    display:block;
+    padding:18px;
+    border:2px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    margin-bottom:15px;
+    cursor:pointer;
+    transition:.25s;
+    background:rgba(255,255,255,.03);
+}
+
+.option:hover{
+    border-color:#3b82f6;
+    transform:translateY(-2px);
+}
+
+.option input{
+    margin-right:12px;
+    transform:scale(1.2);
+}
+
+.navigation{
+    display:flex;
+    justify-content:space-between;
+    margin-top:25px;
+}
+
+button{
+    border:none;
+    padding:14px 24px;
+    border-radius:14px;
+    cursor:pointer;
+    color:white;
+    font-weight:600;
+    transition:.25s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+}
+
+.prev{
+    background:#475569;
+}
+
+.next{
+    background:#2563eb;
+}
+
+.submit{
+    background:
+    linear-gradient(
+    135deg,
+    #22c55e,
+    #15803d
+    );
+    width:100%;
+    margin-top:15px;
+    font-size:16px;
+}
+
+.palette{
+    margin-top:25px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    padding:25px;
+    border-radius:24px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+}
+
+.palette button{
+    width:50px;
+    height:50px;
+    border-radius:14px;
+    background:#334155;
+    color:white;
+}
+
+.palette button.answered{
+    background:#22c55e;
+}
+
+.palette button.current{
+    background:#2563eb;
+}
+
+.result-header{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    padding:25px;
+    border-radius:24px;
+    margin-bottom:20px;
+    text-align:center;
+}
+
+.result-header h2{
+    font-size:32px;
+    margin-bottom:10px;
+}
+
+.review-card{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:15px;
+}
+
+.review-card.correct{
+    border-left:6px solid #22c55e;
+}
+
+.review-card.wrong{
+    border-left:6px solid #ef4444;
+}
+
+.review-card h3{
+    margin-bottom:12px;
+}
+
+.review-card p{
+    line-height:1.7;
+    color:#e2e8f0;
+}
+
+#resultContainer{
+    margin-top:30px;
+}
+
+@media(max-width:768px){
+
+    body{
+        padding:15px;
+    }
+
+    .question{
+        font-size:20px;
+    }
+
+    .navigation{
+        gap:10px;
+    }
+
+    .navigation button{
+        flex:1;
+    }
+
+    .palette button{
+        width:45px;
+        height:45px;
+    }
+
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+    <h2 id="quizTitle">Loading...</h2>
+    <div class="subject" id="quizSubject"></div>
+</div>
+
+<div class="question-card">
+
+    <div class="question-count" id="questionCount"></div>
+
+    <div class="question" id="questionText"></div>
+
+    <div id="options"></div>
+
+    <div class="navigation">
+
+        <button
+        class="prev"
+        onclick="previousQuestion()">
+        Previous
+        </button>
+
+        <button
+        class="next"
+        onclick="nextQuestion()">
+        Next
+        </button>
+
+    </div>
+
+</div>
+
+<div class="palette" id="palette"></div>
+
+<div style="margin-top:20px">
+
+<button
+class="submit"
+onclick="submitQuiz()">
+Submit Quiz
+</button>
+
+<div id="resultContainer"
+     style="display:none;margin-top:20px;">
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const API_URL ="http://localhost:3000/api";
+const token = localStorage.getItem("token");
+
+if(!token){
+    window.location.href = "home.html";
+}
+const params =
+new URLSearchParams(
+    window.location.search
+);
+
+const quizId = params.get("id");
+
+let quiz;
+
+async function loadQuiz(){
+
+    try{
+
+        const token =
+        localStorage.getItem(
+            "token"
+        );
+
+        const response =
+        await fetch(    
+    API_URL + "/quiz/" + quizId,
+    {
+        headers:{
+            Authorization:
+            `Bearer ${token}`
+        }
+    }
+);
+
+
+
+        const quizzes =
+        await response.json();
+
+        console.log(quizzes);
+
+        if(!quizzes){
+
+            alert(
+                "No quizzes available"
+            );
+
+            return;
+        }
+
+        // First quiz for now
+        quiz = quizzes;
+
+        
+
+        document.getElementById(
+            "quizTitle"
+        ).innerText =
+        quiz.title;
+
+        document.getElementById(
+            "quizSubject"
+        ).innerText =
+        quiz.subject;
+
+        renderQuestion();
+        renderPalette();
+
+    }catch(err){
+
+        console.error(err);
+
+        alert(
+            "Failed to load quiz"
+        );
+
+    }
+
+}
+
+loadQuiz();
+let currentQuestion = 0;
+let answers = {};
+
+
+renderQuestion();
+renderPalette();
+
+function renderQuestion(){
+
+    const q = quiz.questions[currentQuestion];
+
+    document.getElementById("questionCount")
+    .innerText =
+    `Question ${currentQuestion+1} of ${quiz.questions.length}`;
+
+    document.getElementById("questionText")
+    .innerText =
+    q.question;
+
+    const optionsDiv =
+    document.getElementById("options");
+
+    optionsDiv.innerHTML = "";
+
+    Object.entries(q.options)
+    .forEach(([key,value])=>{
+
+        optionsDiv.innerHTML += `
+
+        <label class="option">
+
+            <input
+            type="radio"
+            name="answer"
+            value="${key}"
+
+            ${
+                answers[q.id] === key
+                ? "checked"
+                : ""
+            }
+
+            onchange="saveAnswer(${q.id},'${key}')">
+
+            <strong>${key}.</strong>
+            ${value}
+
+        </label>
+
+        `;
+
+    });
+
+    renderPalette();
+
+}
+
+function saveAnswer(id,option){
+
+    answers[id] = option;
+
+    renderPalette();
+
+}
+
+function nextQuestion(){
+
+    if(
+        currentQuestion <
+        quiz.questions.length-1
+    ){
+
+        currentQuestion++;
+
+        renderQuestion();
+
+    }
+
+}
+
+function previousQuestion(){
+
+    if(currentQuestion > 0){
+
+        currentQuestion--;
+
+        renderQuestion();
+
+    }
+
+}
+
+function renderPalette(){
+
+    const palette =
+    document.getElementById("palette");
+
+    palette.innerHTML = "";
+
+    quiz.questions.forEach((q,index)=>{
+
+        let className = "";
+
+        if(index === currentQuestion){
+
+            className = "current";
+
+        }else if(answers[q.id]){
+
+            className = "answered";
+
+        }
+
+        palette.innerHTML += `
+
+        <button
+        class="${className}"
+        onclick="jumpToQuestion(${index})">
+
+        ${index+1}
+
+        </button>
+
+        `;
+
+    });
+
+}
+
+function jumpToQuestion(index){
+
+    currentQuestion = index;
+
+    renderQuestion();
+
+}
+
+
+async function submitQuiz(){
+
+    let score = 0;
+
+    let reviewHtml = "";
+
+    quiz.questions.forEach(q=>{
+
+        const userAnswer =
+        answers[q.id] || "Not Answered";
+
+        const isCorrect =
+        userAnswer === q.answer;
+
+        if(isCorrect){
+            score++;
+        }
+
+        reviewHtml += `
+
+        <div class="review-card
+            ${isCorrect ? 'correct' : 'wrong'}">
+
+            <h3>
+                ${isCorrect ? '✅ Correct' : '❌ Wrong'}
+            </h3>
+
+            <p>
+                <strong>Question:</strong>
+                ${q.question}
+            </p>
+
+            <p>
+                <strong>Your Answer:</strong>
+                ${userAnswer}
+            </p>
+
+            <p>
+                <strong>Correct Answer:</strong>
+                ${q.answer}
+            </p>
+
+        </div>
+
+        `;
+
+    });
+
+    const payload = {
+
+        quizId:quiz.id,
+        score,
+        answers
+
+    };
+
+    console.log(payload);
+
+    document.getElementById(
+        "resultContainer"
+    ).innerHTML = `
+
+        <div class="result-header">
+
+            <h2>
+                🎉 Score:
+                ${score}/${quiz.questions.length}
+            </h2>
+
+        </div>
+
+        ${reviewHtml}
+
+    `;
+
+    document.getElementById(
+        "resultContainer"
+    ).style.display = "block";
+
+    window.scrollTo({
+        top:document.body.scrollHeight,
+        behavior:"smooth"
+    });
+
+     
+    await fetch(
+        API_URL+"/quiz/submit",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "Authorization":"Bearer " + token
+            },
+            body:JSON.stringify(payload)
+        }
+    );
+    
+
+}
+
+   
+
+
+
+</script>
+
+</body>
+</html>
+

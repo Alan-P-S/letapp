@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Available Quizzes</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:
+    radial-gradient(circle at top,
+    #1e293b,
+    #0f172a 65%);
+    min-height:100vh;
+    padding:30px;
+    color:white;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.title{
+    font-size:34px;
+    font-weight:700;
+}
+
+.back-btn{
+    border:none;
+    background:
+    linear-gradient(
+    135deg,
+    #2563eb,
+    #1d4ed8
+    );
+    color:white;
+    padding:12px 24px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:600;
+    transition:.25s;
+}
+
+.back-btn:hover{
+    transform:translateY(-2px);
+}
+
+.loading{
+    text-align:center;
+    margin-top:120px;
+    font-size:24px;
+    color:#cbd5e1;
+}
+
+.quiz-grid{
+    display:grid;
+    grid-template-columns:
+    repeat(auto-fill,minmax(340px,1fr));
+    gap:25px;
+}
+
+.quiz-card{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    padding:25px;
+    transition:.3s;
+}
+
+.quiz-card:hover{
+    transform:translateY(-6px);
+    border-color:#3b82f6;
+}
+
+.subject{
+    display:inline-block;
+    background:rgba(59,130,246,.15);
+    color:#60a5fa;
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:18px;
+}
+
+.quiz-title{
+    font-size:24px;
+    font-weight:700;
+    margin-bottom:15px;
+    line-height:1.4;
+}
+
+.quiz-info{
+    color:#94a3b8;
+    margin-bottom:10px;
+    font-size:15px;
+}
+
+.start-btn{
+    width:100%;
+    margin-top:18px;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:
+    linear-gradient(
+    135deg,
+    #2563eb,
+    #1d4ed8
+    );
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+    font-size:15px;
+    transition:.25s;
+}
+
+.start-btn:hover{
+    transform:translateY(-2px);
+}
+
+.start-btn:active{
+    transform:translateY(0);
+}
+
+@media(max-width:768px){
+
+    body{
+        padding:15px;
+    }
+
+    .header{
+        flex-direction:column;
+        gap:15px;
+        text-align:center;
+    }
+
+    .title{
+        font-size:28px;
+    }
+
+    .quiz-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="title">📚 Available Quizzes</div>
+
+    <button class="back-btn"
+        onclick="location.href='home.html'">
+        Dashboard
+    </button>
+</div>
+
+<div id="loading" class="loading">
+    Loading quizzes...
+</div>
+
+<div id="quizContainer"
+     class="quiz-grid"
+     style="display:none;">
+</div>
+
+<script>
+
+// Protection
+const token = localStorage.getItem("token");
+
+if(!token){
+    window.location.href = "index.html";
+}
+
+const params =
+new URLSearchParams(
+    window.location.search
+);
+
+const quizSubject =
+params.get("subject");
+const API_URL =
+"http://localhost:3000/api";
+
+async function fetchQuizzes(){
+
+    try{
+
+        const token =
+        localStorage.getItem(
+            "token"
+        );
+
+        const response =
+        await fetch(
+            API_URL + "/quiz/subject/"+quizSubject,
+            {
+                method:"GET",
+                headers:{
+                    "Content-Type":
+                    "application/json",
+
+                    Authorization:
+                    `Bearer ${token}`
+                }
+            }
+        );
+
+        if(!response.ok){
+
+            throw new Error(
+                "Failed to fetch quizzes"
+            );
+
+        }
+
+        return await response.json();
+
+    }catch(err){
+
+        console.error(err);
+
+        return [];
+
+    }
+
+}
+
+async function loadQuizzes(){
+
+    const quizzes = await fetchQuizzes();
+
+    const container =
+    document.getElementById("quizContainer");
+
+    container.innerHTML = "";
+
+    quizzes.forEach(quiz=>{
+
+    container.innerHTML += `
+
+    <div class="quiz-card">
+
+        <div class="subject">
+            ${quiz.subject}
+        </div>
+
+        <div class="quiz-title">
+            ${quiz.title}
+        </div>
+
+       
+        <div class="quiz-info">
+            Reward:
+            🟡 ${quiz.rewardTokens || 0}
+        </div>
+
+        <button
+            class="start-btn"
+            onclick="startQuiz(${quiz.id})">
+
+            Start Quiz
+
+        </button>
+
+    </div>
+
+    `;
+
+});
+
+    document.getElementById("loading")
+    .style.display = "none";
+
+    container.style.display = "grid";
+
+}
+
+function startQuiz(id){
+
+    window.location.href =
+    `quiz.html?id=${id}`;
+
+}
+loadQuizzes();
+ 
+</script>
+
+</body>
+</html>
