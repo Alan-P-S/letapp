@@ -19,6 +19,7 @@
 body{
     background:#0f172a;
     color:white;
+    min-height:100vh;
 }
 
 header{
@@ -28,144 +29,124 @@ header{
     font-weight:bold;
 }
 
-#videoPlayerContainer{
-
-    width:90%;
-    max-width:1000px;
-
-    margin:20px auto;
-
-    display:none;
-}
-
-video{
-
-    width:100%;
-    border-radius:12px;
-}
-
 .grid{
-
     width:95%;
     margin:auto;
-
     display:grid;
-
     grid-template-columns:
     repeat(auto-fill,minmax(280px,1fr));
-
     gap:20px;
-
     padding:20px;
 }
 
 .card{
-
     background:#1e293b;
-
     border-radius:15px;
-
     overflow:hidden;
-
     cursor:pointer;
-
     transition:.3s;
 }
 
 .card:hover{
-
     transform:translateY(-5px);
-
 }
 
 .thumbnail{
-
     width:100%;
     height:180px;
-
     object-fit:cover;
+
+    filter:blur(30px);
+    transition:.4s;
+}
+
+.card:hover .thumbnail{
+    filter:blur(0);
 }
 
 .content{
-
     padding:15px;
 }
 
 .title{
-
     font-size:18px;
     font-weight:bold;
-
     margin-bottom:8px;
 }
 
 .cost{
-
     color:#22c55e;
+    font-weight:bold;
 }
 
 .message{
-
     text-align:center;
     margin:20px;
     color:#f87171;
 }
+
 .modal{
-
     display:none;
-
     position:fixed;
-
     top:0;
     left:0;
-
     width:100%;
     height:100%;
-
-    background:
-    rgba(0,0,0,.85);
-
+    background:rgba(0,0,0,.9);
     z-index:9999;
-
     justify-content:center;
     align-items:center;
+    padding:20px;
 }
 
 .modal-content{
-
     width:90%;
     max-width:1000px;
 }
 
 .modal video{
-
     width:100%;
     border-radius:12px;
+    background:black;
 }
 
 .close{
-
     color:white;
-
     font-size:40px;
-
     cursor:pointer;
-
     float:right;
-
     margin-bottom:10px;
 }
-.thumbnail{
-    width:100%;
-    height:180px;
-    object-fit:cover;
-    filter:blur(30px);
-    transition:.3s;
+
+.close:hover{
+    color:#f87171;
 }
+
+.loading{
+    text-align:center;
+    padding:30px;
+    color:#94a3b8;
+}
+
 </style>
 
 </head>
 <body>
+
+<header>
+🎬 Video Platform
+</header>
+
+<div id="message" class="message"></div>
+
+<div id="videoGrid" class="grid">
+    <div class="loading">
+        Loading videos...
+    </div>
+</div>
+
+<!-- Video Modal -->
+
 <div id="videoModal" class="modal">
 
     <div class="modal-content">
@@ -184,26 +165,6 @@ video{
     </div>
 
 </div>
-<header>
-🎬 Video Platform
-</header>
-
-<div id="videoPlayerContainer">
-
-    <video
-        id="player"
-        controls>
-    </video>
-
-</div>
-
-<div class="message"
-id="message">
-</div>
-
-<div class="grid"
-id="videoGrid">
-</div>
 
 <script>
 
@@ -216,10 +177,9 @@ async function loadVideos(){
 
         const response =
         await fetch(API);
-        
+
         const data =
         await response.json();
-        console.log(data);
 
         const grid =
         document.getElementById(
@@ -242,7 +202,8 @@ async function loadVideos(){
 
                 <img
                 class="thumbnail"
-                src="${video.thumbnailUrl}">
+                src="${video.thumbnailUrl}"
+                onerror="this.src='https://placehold.co/600x400?text=No+Thumbnail'">
 
                 <div class="content">
 
@@ -277,6 +238,11 @@ async function loadVideos(){
 
         console.error(err);
 
+        document.getElementById(
+            "videoGrid"
+        ).innerHTML =
+        "<div class='loading'>Failed to load videos.</div>";
+
     }
 
 }
@@ -287,8 +253,7 @@ async function playVideo(id){
 
         document.getElementById(
             "message"
-        ).innerHTML =
-        "";
+        ).innerHTML = "";
 
         const response =
         await fetch(
@@ -297,59 +262,117 @@ async function playVideo(id){
                 headers:{
                     Authorization:
                     `Bearer ${
-                    localStorage.getItem(
-                    "token"
-                    )}`
+                        localStorage.getItem(
+                            "token"
+                        )
+                    }`
                 }
             }
         );
 
         const data =
         await response.json();
-
+            console.log(data);
+console.log(data.videoUrl);
         if(!response.ok){
 
             document.getElementById(
                 "message"
             ).innerHTML =
-            data.message;
+            data.message ||
+            "Unable to play video.";
 
             return;
         }
 
         const player =
-document.getElementById(
-    "player"
-);
+        document.getElementById(
+            "player"
+        );
 
-player.src =
-data.videoUrl;
+        player.src =
+        data.videoUrl;
 
-document
-.getElementById(
-    "videoModal"
-)
-.style.display =
-"flex";
+        document
+        .getElementById(
+            "videoModal"
+        )
+        .style.display =
+        "flex";
 
-player.play();
-
-        window.scrollTo({
-
-            top:0,
-
-            behavior:
-            "smooth"
-
-        });
+        player.play();
 
     }catch(err){
 
         console.error(err);
 
+        document.getElementById(
+            "message"
+        ).innerHTML =
+        "Error loading video.";
+
     }
 
 }
+
+function closePlayer(){
+
+    const player =
+    document.getElementById(
+        "player"
+    );
+
+    player.pause();
+
+    player.removeAttribute(
+        "src"
+    );
+
+    player.load();
+
+    document
+    .getElementById(
+        "videoModal"
+    )
+    .style.display =
+    "none";
+
+}
+
+document
+.getElementById(
+    "videoModal"
+)
+.addEventListener(
+    "click",
+    function(e){
+
+        if(
+            e.target === this
+        ){
+
+            closePlayer();
+
+        }
+
+    }
+);
+
+document
+.addEventListener(
+    "keydown",
+    function(e){
+
+        if(
+            e.key === "Escape"
+        ){
+
+            closePlayer();
+
+        }
+
+    }
+);
 
 loadVideos();
 
