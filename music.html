@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Music Uploader</title>
+  <!-- 1. Load Supabase JS Client library via CDN -->
+  <script src="https://jsdelivr.net"></script>
+  
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 500px; }
+    .container { display: flex; flex-direction: column; gap: 15px; }
+    button { padding: 10px; cursor: pointer; background: #3ecf8e; color: white; border: none; border-radius: 4px; }
+    audio { width: 100%; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Upload & Stream Music</h2>
+    
+    <!-- File Input restricted to audio files -->
+    <input type="file" id="audio-picker" accept="audio/*" />
+    
+    <button id="upload-btn">Upload Song</button>
+    
+    <div id="status"></div>
+    
+    <!-- Audio player that appears after successful upload -->
+    <audio id="audio-player" controls style="display: none;"></audio>
+  </div>
+
+  <script>
+    // 2. Initialize your Supabase client using global 'supabase' object from CDN
+    const supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co'
+    const supabaseKey = 'YOUR_ANON_PUBLIC_KEY'
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
+
+    // 3. Select DOM elements
+    const fileInput = document.getElementById('audio-picker');
+    const uploadButton = document.getElementById('upload-btn');
+    const statusDiv = document.getElementById('status');
+    const audioPlayer = document.getElementById('audio-player');
+
+    // 4. Handle the file upload process
+    uploadButton.addEventListener('click', async () => {
+      const file = fileInput.files[0]; // Get the first selected file
+      
+      if (!file) {
+        statusDiv.innerText = '⚠️ Please select an audio file first!';
+        return;
+      }
+
+      // Check the 50MB free tier file size limit (50 * 1024 * 1024 bytes)
+      if (file.size > 52428800) {
+        statusDiv.innerText = '❌ File exceeds the 50MB free tier limit!';
+        return;
+      }
+
+      statusDiv.innerText = '⏳ Uploading your track...';
+      uploadButton.disabled = true;
+
+      // Create a unique file path using the timestamp
+      const filePath = `${Date.now()}_${file.name}`;
+
+      try {
+        // Upload the binary file to your public 'music' bucket
+        const { data, error } = await supabaseClient.storage
+          .from('music')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type // Crucial for direct streaming browser support
+          });
+
+        if (error) throw error;
+
+        // 5. Generate the public streaming CDN link
+        const { data: publicUrlData } = supabaseClient.storage
+          .from('music')
+          .getPublicUrl(filePath);
+
+        const streamUrl = publicUrlData.publicUrl;
+        
+        statusDiv.innerHTML = `✅ Upload Complete! <br><a href="${streamUrl}" target="_blank">Direct Stream Link</a>`;
+        
+        // 6. Load the URL into the HTML5 audio element for instant playback
+        audioPlayer.src = streamUrl;
+        audioPlayer.style.display = 'block';
+        audioPlayer.play();
+
+      } catch (err) {
+        console.error(err);
+        statusDiv.innerText = `❌ Error: ${err.message}`;
+      } finally {
+        uploadButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
