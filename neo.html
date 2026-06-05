@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacBook Neo</title>
+<style>
+    *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+body{
+    background:#000;
+    color:white;
+    overflow-x:hidden;
+}
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:25px 8%;
+}
+
+.navbar ul{
+    display:flex;
+    gap:30px;
+    list-style:none;
+}
+
+.navbar a{
+    color:white;
+    text-decoration:none;
+    opacity:.8;
+}
+
+.navbar a:hover{
+    opacity:1;
+}
+
+.hero{
+    min-height:90vh;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 8%;
+}
+
+.content{
+    max-width:550px;
+}
+
+.content h1{
+    font-size:5rem;
+    background:linear-gradient(
+        90deg,
+        #ffffff,
+        #8ec5fc,
+        #e0c3fc
+    );
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+.content h2{
+    font-size:2rem;
+    margin-top:10px;
+}
+
+.content p{
+    margin:25px 0;
+    line-height:1.8;
+    color:#cfcfcf;
+}
+
+.buttons{
+    display:flex;
+    gap:15px;
+}
+
+.primary,
+.secondary{
+    padding:14px 28px;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+    font-size:1rem;
+}
+
+.primary{
+    background:white;
+    color:black;
+}
+
+.secondary{
+    background:transparent;
+    border:1px solid white;
+    color:white;
+}
+
+.device-area{
+    perspective:1500px;
+}
+
+.macbook{
+    width:520px;
+    height:320px;
+    transform-style:preserve-3d;
+    animation:float 5s ease-in-out infinite;
+}
+
+.screen{
+    width:100%;
+    height:280px;
+    border-radius:18px;
+    border:8px solid #d9d9d9;
+    background:#111;
+    overflow:hidden;
+    transform:rotateX(-8deg);
+    transition:.4s;
+}
+
+.wallpaper{
+    width:100%;
+    height:100%;
+    background:
+    radial-gradient(circle at top right,
+    #00c6ff,
+    #0072ff,
+    #000);
+}
+
+.base{
+    width:540px;
+    height:20px;
+    background:#d9d9d9;
+    margin-left:-10px;
+    border-radius:0 0 18px 18px;
+    transition:.4s;
+}
+
+.colors{
+    display:flex;
+    gap:12px;
+    margin-top:30px;
+}
+
+.colors span{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    cursor:pointer;
+    border:2px solid white;
+}
+
+.colors span:nth-child(1){
+    background:#d9d9d9;
+}
+
+.colors span:nth-child(2){
+    background:#2d2d2d;
+}
+
+.colors span:nth-child(3){
+    background:#7f8fa6;
+}
+
+.colors span:nth-child(4){
+    background:#c49b66;
+}
+
+@keyframes float{
+    0%,100%{
+        transform:rotateY(-10deg)
+                  translateY(0px);
+    }
+
+    50%{
+        transform:rotateY(10deg)
+                  translateY(-20px);
+    }
+}
+
+@media(max-width:900px){
+
+.hero{
+    flex-direction:column;
+    text-align:center;
+    gap:50px;
+}
+
+.content h1{
+    font-size:3.5rem;
+}
+
+.macbook{
+    width:350px;
+}
+
+.base{
+    width:370px;
+}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo"> MacBook Neo</div>
+    <ul>
+        <li><a href="#">Overview</a></li>
+        <li><a href="#">Tech Specs</a></li>
+        <li><a href="#">Buy</a></li>
+    </ul>
+</nav>
+
+<section class="hero">
+    <div class="content">
+        <h1>MacBook Neo</h1>
+        <h2>Beyond Performance.</h2>
+        <p>
+            Ultra-thin. AI-powered. Crafted for creators, developers,
+            and visionaries.
+        </p>
+
+        <div class="buttons">
+            <button class="primary">Pre-Order</button>
+            <button class="secondary">Learn More</button>
+        </div>
+
+        <div class="colors">
+            <span onclick="changeColor('#d9d9d9')"></span>
+            <span onclick="changeColor('#2d2d2d')"></span>
+            <span onclick="changeColor('#7f8fa6')"></span>
+            <span onclick="changeColor('#c49b66')"></span>
+        </div>
+    </div>
+
+    <div class="device-area">
+        <div class="macbook" id="macbook">
+            <div class="screen">
+                <div class="wallpaper"></div>
+            </div>
+            <div class="base"></div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function changeColor(color){
+
+    const screen =
+        document.querySelector('.screen');
+
+    const base =
+        document.querySelector('.base');
+
+    screen.style.borderColor = color;
+    base.style.background = color;
+}
+
+const macbook =
+    document.getElementById('macbook');
+
+document.addEventListener('mousemove', e => {
+
+    const x =
+        (window.innerWidth / 2 - e.clientX) / 40;
+
+    const y =
+        (window.innerHeight / 2 - e.clientY) / 60;
+
+    macbook.style.transform =
+        `rotateY(${x}deg)
+         rotateX(${-y}deg)`;
+});
+</script>
+</body>
+</html>
