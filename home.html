@@ -428,7 +428,15 @@ body{
     animation-play-state:paused;
 
 }
-
+.sub-btn{
+    background:#e9f728;
+    color:rgb(63, 63, 63);
+    border:none;
+    padding:12px 24px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+}
 .song-info{
 
     display:flex;
@@ -928,8 +936,10 @@ Logout
 
 <p>
 Stay consistent. Every quiz completed brings you closer to Successfff .
-</p>
-
+</p><br>
+<button class="sub-btn" onclick="subscribeUser()">
+Subscribe
+</button>
 </div>
 
 <div class="stats">
@@ -1889,6 +1899,96 @@ function animateCount(target){
 }
 
 loadQuizCount();
+const PUBLIC_VAPID_KEY = "BJpgskpG2YR3iutEzxBV7NpoKS8hUZ_7CvGMsaQ31I6ErcW9mwC7nLlM0kep1APZ_RbmuJGlQX0wgIOiVg4PLrY";
+
+const URL =
+"https://your-backend.onrender.com/api/push/subscribe";
+
+const statusText =
+document.getElementById("status");
+
+document
+.getElementById("subscribeBtn")
+.addEventListener("click", subscribeUser);
+
+async function subscribeUser() {
+
+    try {
+
+        if (!("serviceWorker" in navigator)) {
+            statusText.innerText =
+            "Service Worker not supported";
+            return;
+        }
+
+        const permission =
+        await Notification.requestPermission();
+
+        if (permission !== "granted") {
+            statusText.innerText =
+            "Notification permission denied";
+            return;
+        }
+
+        const registration =
+        await navigator.serviceWorker.register(
+            "./sw.js"
+        );
+
+        const subscription =
+        await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey:
+            urlBase64ToUint8Array(
+                PUBLIC_VAPID_KEY
+            )
+        });
+
+        await fetch(URL,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(subscription)
+        });
+
+        statusText.innerText =
+        "✅ Notifications Enabled";
+
+    } catch(error){
+
+        console.error(error);
+
+        statusText.innerText =
+        "❌ Subscription Failed";
+    }
+}
+
+function urlBase64ToUint8Array(base64String){
+
+    const padding =
+    "=".repeat(
+        (4 - base64String.length % 4) % 4
+    );
+
+    const base64 =
+    (base64String + padding)
+    .replace(/\-/g, "+")
+    .replace(/_/g, "/");
+
+    const rawData =
+    window.atob(base64);
+
+    const outputArray =
+    new Uint8Array(rawData.length);
+
+    for(let i=0;i<rawData.length;i++){
+        outputArray[i] =
+        rawData.charCodeAt(i);
+    }
+
+    return outputArray;
+}
 </script>
 
 </body>
