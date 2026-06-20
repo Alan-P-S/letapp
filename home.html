@@ -1904,13 +1904,6 @@ const PUBLIC_VAPID_KEY = "BJpgskpG2YR3iutEzxBV7NpoKS8hUZ_7CvGMsaQ31I6ErcW9mwC7nL
 const URL =
 "https://wittiest-declinable-castiel.ngrok-free.dev/api/push/subscribe";
 
-const statusText =
-document.getElementById("status");
-
-document
-.getElementById("subscribeBtn")
-.addEventListener("click", subscribeUser);
-
 async function subscribeUser() {
 
     try {
@@ -1952,15 +1945,11 @@ async function subscribeUser() {
             body:JSON.stringify(subscription)
         });
 
-        statusText.innerText =
-        "✅ Notifications Enabled";
+     
 
     } catch(error){
 
         console.error(error);
-
-        statusText.innerText =
-        "❌ Subscription Failed";
     }
 }
 
