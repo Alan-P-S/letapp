@@ -1909,7 +1909,7 @@ async function subscribeUser() {
     try {
 
         if (!("serviceWorker" in navigator)) {
-            statusText.innerText =
+            
             "Service Worker not supported";
             return;
         }
@@ -1918,7 +1918,7 @@ async function subscribeUser() {
         await Notification.requestPermission();
 
         if (permission !== "granted") {
-            statusText.innerText =
+            
             "Notification permission denied";
             return;
         }
