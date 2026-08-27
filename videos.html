@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>EduStream</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI,sans-serif;
+}
+
+body{
+background:#0f1117;
+color:white;
+}
+
+header{
+height:70px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 40px;
+background:#171b25;
+border-bottom:1px solid #252a36;
+position:sticky;
+top:0;
+z-index:100;
+}
+
+.logo{
+font-size:28px;
+font-weight:bold;
+color:#4dabff;
+}
+
+.search{
+width:320px;
+padding:12px 18px;
+border:none;
+border-radius:30px;
+background:#252b38;
+color:white;
+outline:none;
+}
+
+.player{
+width:100%;
+padding:25px;
+background:#000;
+}
+
+.player iframe{
+width:100%;
+height:600px;
+border:none;
+border-radius:12px;
+}
+
+.videoInfo{
+margin-top:18px;
+}
+
+.videoInfo h2{
+font-size:28px;
+margin-bottom:10px;
+}
+
+.videoInfo p{
+color:#bbbbbb;
+}
+
+.sectionTitle{
+padding:25px;
+font-size:24px;
+font-weight:bold;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+gap:22px;
+padding:0 25px 30px;
+}
+
+.card{
+background:#1b2130;
+border-radius:14px;
+overflow:hidden;
+cursor:pointer;
+transition:.25s;
+}
+
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+
+.card img{
+width:100%;
+height:170px;
+object-fit:cover;
+}
+
+.cardContent{
+padding:15px;
+}
+
+.cardContent h3{
+font-size:18px;
+margin-bottom:10px;
+}
+
+.meta{
+display:flex;
+justify-content:space-between;
+color:#a4a4a4;
+font-size:14px;
+}
+
+.playBadge{
+position:absolute;
+background:#4dabff;
+padding:8px 14px;
+border-radius:25px;
+top:12px;
+right:12px;
+font-size:13px;
+font-weight:bold;
+}
+
+.thumb{
+position:relative;
+}
+
+@media(max-width:900px){
+
+.player iframe{
+height:260px;
+}
+
+header{
+padding:15px;
+flex-direction:column;
+height:auto;
+gap:12px;
+}
+
+.search{
+width:100%;
+}
+
+}
+</style>
+
+</head>
+<body>
+
+<header>
+
+<div class="logo">
+🎓 Zukami
+</div>
+
+<input
+class="search"
+placeholder="Search videos..."
+onkeyup="searchVideos(this.value)"
+>
+
+</header>
+
+<div class="player">
+
+<div id="player"></div>
+
+<div class="videoInfo">
+
+<h2 id="title"></h2>
+
+<p id="teacher"></p>
+
+</div>
+
+</div>
+
+<div class="sectionTitle">
+Available Videos
+</div>
+
+<div class="grid" id="videos"></div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const videoJSON = [
+
+{
+    id: "KJgsSFOSQv0",
+    title: "Introduction to C Programming",
+    teacher: "Prof. John",
+    duration: "35 min",
+    thumbnail: "https://img.youtube.com/vi/KJgsSFOSQv0/maxresdefault.jpg"
+},
+
+{
+    id: "rfscVS0vtbw",
+    title: "Python Basics",
+    teacher: "Dr. Smith",
+    duration: "1 hr",
+    thumbnail: "https://img.youtube.com/vi/rfscVS0vtbw/maxresdefault.jpg"
+}
+
+];
+let player;
+let currentVideo = null;
+
+function onYouTubeIframeAPIReady(){
+
+    player = new YT.Player("player",{
+
+        width:"100%",
+        height:"600",
+
+        videoId: videoJSON[0].id,
+
+        playerVars:{
+            autoplay:1,
+            rel:0,
+            modestbranding:1
+        },
+
+        events:{
+            onReady:onPlayerReady
+        }
+
+    });
+
+}
+
+function onPlayerReady(){
+
+    playVideo(videoJSON[0]);
+
+}
+
+const container=document.getElementById("videos");
+
+function loadVideos(list){
+
+container.innerHTML="";
+
+list.forEach(video=>{
+
+container.innerHTML+=`
+
+<div class="card" onclick="playVideo(videoJSON[index])">
+
+<div class="thumb">
+
+<img src="${video.thumbnail}">
+
+<div class="playBadge">
+▶ PLAY
+</div>
+
+</div>
+
+<div class="cardContent">
+
+<h3>${video.title}</h3>
+
+<div class="meta">
+
+<span>${video.teacher}</span>
+
+<span>${video.duration}</span>
+
+</div>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+function playVideo(video){
+
+    currentVideo = video;
+
+    player.loadVideoById(video.id);
+
+    document.getElementById("title").innerHTML = video.title;
+
+    document.getElementById("teacher").innerHTML = video.teacher;
+
+    window.scrollTo({
+
+        top:0,
+        behavior:"smooth"
+
+    });
+
+    const progress = JSON.parse(localStorage.getItem("progress")) || {};
+
+if(progress[video.id]){
+
+    player.seekTo(progress[video.id].current,true);
+
+}
+
+}
+setInterval(()=>{
+
+    if(player && player.getPlayerState()==YT.PlayerState.PLAYING){
+
+        const current = player.getCurrentTime();
+
+        const duration = player.getDuration();
+
+        const percent = Math.floor(current/duration*100);
+
+        console.log(percent+"%");
+
+    }
+
+},1000);
+setInterval(()=>{
+
+    if(!currentVideo) return;
+
+    const progress = JSON.parse(localStorage.getItem("progress")) || {};
+
+    progress[currentVideo.id]={
+
+        current:player.getCurrentTime(),
+
+        duration:player.getDuration()
+
+    };
+
+    localStorage.setItem("progress",JSON.stringify(progress));
+
+},5000);
+function searchVideos(keyword){
+
+keyword=keyword.toLowerCase();
+
+const filtered=videoJSON.filter(v=>
+
+v.title.toLowerCase().includes(keyword) ||
+
+v.teacher.toLowerCase().includes(keyword)
+
+);
+
+loadVideos(filtered);
+
+}
+
+loadVideos(videoJSON);
+
+playVideo(
+videoJSON[0].video,
+videoJSON[0].title,
+videoJSON[0].teacher
+);
+
+</script>
+
+</body>
+</html>

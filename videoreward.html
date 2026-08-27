@@ -165,8 +165,13 @@ header{
     </div>
 
 </div>
-
+    <div class="card">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/TQUfuMY3AWg?si=L6ajZmQadUNrvarU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
 <script>
+const token = localStorage.getItem("token");
+
+if(!token){ window.location.href = "index.html"; }
 
 const API =
 "https://letbackend.onrender.com/api/videos";
