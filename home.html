@@ -73,8 +73,9 @@ body{
     background:
     linear-gradient(
     135deg,
-    #2563eb,
-    #7c3aed
+    #ff7b00,
+    #ffff,
+    #00af0f
     );
     padding:40px;
     border-radius:24px;
@@ -83,12 +84,14 @@ body{
 }
 
 .hero h2{
+    color:#046ffc;
     font-size:36px;
     margin-bottom:10px;
+    
 }
 
 .hero p{
-    color:#e2e8f0;
+    color:#046ffc;
     font-size:18px;
 }
 
@@ -921,7 +924,7 @@ body{
 Welcome Back,
 <span id="username">Loading...</span> 🚀
 </h1>
-<p>Your future engineering seat is earned one study session at a time.</p>
+<p>Your future is build here.Build Yourself and see what you become after 4 years</p>
 </div>
 
 <button class="logout-btn" onclick="logout()">
@@ -932,10 +935,10 @@ Logout
 
 <div class="hero">
 
-<h2>🎯 B.Tech Lateral Entry Last Minute Preparation Dashboard</h2>
+<h2>🎯 Indian Military and UPSC preparation</h2>
 
 <p>
-Stay consistent. Every quiz completed brings you closer to Successfff .
+Stay consistent. Every Task completed brings you closer to Success .
 </p><br>
 <button class="sub-btn" onclick="subscribeUser()">
 Subscribe
@@ -1170,37 +1173,37 @@ View rankings and compete with other aspirants.
 <div class="subject"
      onclick="startQuiz('Electrical')">
     <div class="subject-icon">⚡</div>
-    <h3>Electrical</h3>
-    <p>Machines, Power Systems & Circuits</p>
+    <h3>Artificial Intelligence and Machine Learning</h3>
+    <p>Vectors,Matrices and Probability</p>
 </div>
 <div class="subject"
      onclick="startQuiz('Electronics')">
     <div class="subject-icon">⚡</div>
-    <h3>Electronics</h3>
-    <p>Devices, Digital Logic & Communication</p>
+    <h3>Digital Electronics and Circuit design</h3>
+    <p>Binary Numbers and 4 Bit adder and Multiplayer</p>
 </div>
 <div class="subject" onclick="startQuiz('Mechanical')">
     <div class="subject-icon">⚙️</div>
-    <h3>Mechanical</h3>
-    <p>Thermodynamics & Manufacturing</p>
+    <h3>Data Structure and Algorithm</h3>
+    <p>Stack , Queue , Tree and Binary Search</p>
 </div>
 
 <div class="subject" onclick="startQuiz('Civil')">
     <div class="subject-icon">🏗️</div>
-    <h3>Civil</h3>
-    <p>Structures, Surveying & Construction</p>
+    <h3>Mathematics</h3>
+    <p>Fourier transform and Fourier Integral</p>
 </div>
 
 <div class="subject" onclick="startQuiz('Mathematics')">
     <div class="subject-icon">📐</div>
-    <h3>Mathematics</h3>
-    <p>Calculus, Algebra & Engineering Maths</p>
+    <h3>Engineering Ethic</h3>
+    <p>Ethical decisions made by engineers</p>
 </div>
 
 <div class="subject" onclick="startQuiz('Mechanics')">
     <div class="subject-icon">🚀</div>
-    <h3>Mechanics</h3>
-    <p>Force, Motion & Engineering Applications</p>
+    <h3>Circuits and Networks</h3>
+    <p>Mesh analysis and Nodal Analysis</p>
 </div>
 
 <div class="subject" onclick="startQuiz('Programming')">
@@ -1208,9 +1211,7 @@ View rankings and compete with other aspirants.
     <h3>Programming</h3>
     <p>C, C++, Data Structures & Algorithms</p>
 </div>
-
 </div>
-
 <div class="quote" style="text-decoration: none;">
 
 🔥 "Success is not built in a day. It is built daily. One quiz, one chapter, one focused hour at a time."
@@ -1418,7 +1419,11 @@ interval = setInterval(
     1000
 );
 const playlist = [
-
+{
+    title:"Rekka Rekka",
+    artist:"Nivas K. Prasanna, Vedan",
+    src:"music/Rekka.mp3"
+},
 {
     title:"Akale",
     artist:"Nevin Thomas, Akhil Jifroom, Deepu Antony, Irine Ann",

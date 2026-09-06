@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Timetable Editor</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        .entry {
+            display: grid;
+            grid-template-columns: 1fr 160px auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        button {
+            border: none;
+            border-radius: 7px;
+            padding: 11px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .add-btn {
+            background: #2563eb;
+            color: white;
+            margin-top: 5px;
+        }
+
+        .add-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+
+        .save-btn {
+            background: #16a34a;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #15803d;
+        }
+
+        .copy-btn {
+            background: #0f766e;
+            color: white;
+        }
+
+        .download-btn {
+            background: #7c3aed;
+            color: white;
+        }
+
+        .clear-btn {
+            background: #64748b;
+            color: white;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 350px;
+            resize: vertical;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #111827;
+            color: #e5e7eb;
+        }
+
+        .status {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 7px;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status.error {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty {
+            color: #777;
+            font-style: italic;
+            padding: 10px 0;
+        }
+
+        @media (max-width: 650px) {
+
+            .entry {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .actions button {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>📚 Timetable Editor</h1>
+
+    <div id="status" class="status"></div>
+
+
+    <div class="card">
+
+        <div class="controls">
+
+            <label for="day">
+                Day
+            </label>
+
+            <select id="day">
+
+                <option value="Sunday">Sunday</option>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+
+            </select>
+
+        </div>
+
+
+        <div id="entries"></div>
+
+
+        <button
+            type="button"
+            class="add-btn"
+            id="addBtn"
+        >
+            + Add Subject
+        </button>
+
+
+        <div class="actions">
+
+            <button
+                type="button"
+                class="save-btn"
+                id="saveBtn"
+            >
+                💾 Save Timetable
+            </button>
+
+            <button
+                type="button"
+                class="copy-btn"
+                id="copyBtn"
+            >
+                📋 Copy JSON
+            </button>
+
+            <button
+                type="button"
+                class="download-btn"
+                id="downloadBtn"
+            >
+                ⬇ Download JSON
+            </button>
+
+            <button
+                type="button"
+                class="clear-btn"
+                id="clearBtn"
+            >
+                🗑 Clear Day
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>Generated JSON</h2>
+
+        <textarea
+            id="jsonOutput"
+            readonly
+        ></textarea>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // ==================================================
+    // Global timetable
+    // ==================================================
+    const url = 'http://localhost:3000'
+    let timetable = {};
+
+
+    const daySelect =
+        document.getElementById("day");
+
+    const entriesContainer =
+        document.getElementById("entries");
+
+    const jsonOutput =
+        document.getElementById("jsonOutput");
+
+    const status =
+        document.getElementById("status");
+
+
+    // ==================================================
+    // Show status
+    // ==================================================
+
+    function showStatus(message, type = "success") {
+
+        status.textContent = message;
+
+        status.className =
+            "status " + type;
+
+        setTimeout(() => {
+
+            status.className = "status";
+
+        }, 3000);
+    }
+
+
+    // ==================================================
+    // Load timetable from API
+    // ==================================================
+
+    async function loadTimetable() {
+
+        try {
+
+            const response =
+                await fetch(`${url}`+"/api/accademic/time-table");
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Failed to load timetable"
+                );
+            }
+
+
+            const data =
+                await response.json();
+
+
+            // Make sure timetable is an object
+            timetable =
+                data && typeof data === "object"
+                    ? data
+                    : {};
+
+
+            // Make sure all days exist
+            const days = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+            ];
+
+
+            days.forEach(day => {
+
+                if (!Array.isArray(timetable[day])) {
+                    timetable[day] = [];
+                }
+
+            });
+
+
+            loadDay();
+
+            showStatus(
+                "Timetable loaded successfully.",
+                "success"
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            timetable = {};
+
+            showStatus(
+                "Failed to load timetable.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    // ==================================================
+    // Load selected day into UI
+    // ==================================================
+
+    function loadDay() {
+
+        const day =
+            daySelect.value;
+
+
+        entriesContainer.innerHTML = "";
+
+
+        const entries =
+            timetable[day] || [];
+
+
+        if (entries.length === 0) {
+
+            showEmptyMessage();
+
+        } else {
+
+            entries.forEach(entry => {
+
+                createEntry(
+                    entry.subject || "",
+                    entry.time || ""
+                );
+
+            });
+
+        }
+
+
+        updateJSONPreview();
+
+    }
+
+
+    // ==================================================
+    // Empty message
+    // ==================================================
+
+    function showEmptyMessage() {
+
+        entriesContainer.innerHTML = `
+            <div class="empty">
+                No subjects added for this day.
+            </div>
+        `;
+
+    }
+
+
+    // ==================================================
+    // Create subject entry
+    // ==================================================
+
+    function createEntry(
+        subject = "",
+        time = ""
+    ) {
+
+        // Remove "empty" message
+        const empty =
+            entriesContainer.querySelector(".empty");
+
+        if (empty) {
+            empty.remove();
+        }
+
+
+        const entry =
+            document.createElement("div");
+
+        entry.className = "entry";
+
+
+        // Subject input
+        const subjectInput =
+            document.createElement("input");
+
+        subjectInput.type = "text";
+
+        subjectInput.className =
+            "subject-input";
+
+        subjectInput.placeholder =
+            "Subject name";
+
+        subjectInput.value =
+            subject;
+
+
+        // Time input
+        const timeInput =
+            document.createElement("input");
+
+        timeInput.type = "time";
+
+        timeInput.step = "1";
+
+        timeInput.className =
+            "time-input";
+
+        timeInput.value =
+            convertToTimeInput(time);
+
+
+        // Remove button
+        const removeButton =
+            document.createElement("button");
+
+        removeButton.type = "button";
+
+        removeButton.className =
+            "remove-btn";
+
+        removeButton.textContent =
+            "Remove";
+
+
+        // Add elements
+        entry.appendChild(subjectInput);
+
+        entry.appendChild(timeInput);
+
+        entry.appendChild(removeButton);
+
+        entriesContainer.appendChild(entry);
+
+
+        // ==================================================
+        // IMPORTANT:
+        // Update timetable immediately when typing
+        // ==================================================
+
+        subjectInput.addEventListener(
+            "input",
+            () => {
+
+                updateCurrentDay();
+
+                updateJSONPreview();
+
+            }
+        );
+
+
+        timeInput.addEventListener(
+            "input",
+            () => {
+
+                updateCurrentDay();
+
+                updateJSONPreview();
+
+            }
+        );
+
+
+        removeButton.addEventListener(
+            "click",
+            () => {
+
+                entry.remove();
+
+                updateCurrentDay();
+
+                updateJSONPreview();
+
+
+                if (
+                    entriesContainer
+                        .querySelectorAll(".entry")
+                        .length === 0
+                ) {
+
+                    showEmptyMessage();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // ==================================================
+    // Add new subject
+    // ==================================================
+
+    function addEntry() {
+
+        createEntry("", "");
+
+        // Immediately update timetable
+        updateCurrentDay();
+
+        updateJSONPreview();
+
+    }
+
+
+    // ==================================================
+    // Update currently selected day
+    // ==================================================
+
+    function updateCurrentDay() {
+
+        const day =
+            daySelect.value;
+
+
+        const entries = [];
+
+
+        const entryElements =
+            entriesContainer.querySelectorAll(".entry");
+
+
+        entryElements.forEach(entry => {
+
+            const subjectInput =
+                entry.querySelector(".subject-input");
+
+            const timeInput =
+                entry.querySelector(".time-input");
+
+
+            const subject =
+                subjectInput.value.trim();
+
+            const time =
+                timeInput.value;
+
+
+            // Completely empty row
+            // is not saved
+            if (!subject && !time) {
+                return;
+            }
+
+
+            const item = {};
+
+
+            if (subject) {
+
+                item.subject =
+                    subject;
+
+            }
+
+
+            if (time) {
+
+                item.time =
+                    convertToJSONTime(time);
+
+            }
+
+
+            entries.push(item);
+
+        });
+
+
+        // IMPORTANT:
+        // Save the current UI entries
+        // back into the global timetable
+        timetable[day] = entries;
+
+    }
+
+
+    // ==================================================
+    // Update JSON preview
+    // ==================================================
+
+    function updateJSONPreview() {
+
+        jsonOutput.value =
+            JSON.stringify(
+                timetable,
+                null,
+                4
+            );
+
+    }
+
+
+    // ==================================================
+    // Convert HH:mm:ss -> HH:mm
+    // ==================================================
+
+    function convertToTimeInput(time) {
+
+        if (!time) {
+            return "";
+        }
+
+
+        // Already HH:mm
+        if (time.length === 5) {
+            return time;
+        }
+
+
+        // HH:mm:ss -> HH:mm
+        if (time.length >= 8) {
+            return time.substring(0, 5);
+        }
+
+
+        return time;
+
+    }
+
+
+    // ==================================================
+    // Convert HH:mm -> HH:mm:ss
+    // ==================================================
+
+    function convertToJSONTime(time) {
+
+        if (!time) {
+            return "";
+        }
+
+
+        // HH:mm -> HH:mm:ss
+        if (time.length === 5) {
+
+            return time + ":00";
+
+        }
+
+
+        return time;
+
+    }
+
+
+    // ==================================================
+    // Save timetable to API
+    // ==================================================
+
+    async function saveTimetable() {
+
+        // Make absolutely sure the current
+        // selected day is synchronized
+        updateCurrentDay();
+
+
+        updateJSONPreview();
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${url}`+"/api/accademic/time-table",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                timetable
+                            )
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result.error ||
+                    "Failed to save timetable"
+                );
+
+            }
+
+
+            showStatus(
+                "✓ Timetable saved successfully!",
+                "success"
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            showStatus(
+                "Failed to save timetable.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    // ==================================================
+    // Copy JSON
+    // ==================================================
+
+    async function copyJSON() {
+
+        updateCurrentDay();
+
+        updateJSONPreview();
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                jsonOutput.value
+            );
+
+
+            showStatus(
+                "JSON copied to clipboard!",
+                "success"
+            );
+
+
+        } catch (error) {
+
+            jsonOutput.select();
+
+            document.execCommand("copy");
+
+
+            showStatus(
+                "JSON copied!",
+                "success"
+            );
+
+        }
+
+    }
+
+
+    // ==================================================
+    // Download JSON
+    // ==================================================
+
+    function downloadJSON() {
+
+        updateCurrentDay();
+
+        updateJSONPreview();
+
+
+        const blob =
+            new Blob(
+                [jsonOutput.value],
+                {
+                    type: "application/json"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement("a");
+
+
+        link.href = url;
+
+        link.download =
+            "timetable.json";
+
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+
+        URL.revokeObjectURL(url);
+
+    }
+
+
+    // ==================================================
+    // Clear current day
+    // ==================================================
+
+    function clearDay() {
+
+        const day =
+            daySelect.value;
+
+
+        timetable[day] = [];
+
+
+        entriesContainer.innerHTML = "";
+
+
+        showEmptyMessage();
+
+
+        updateJSONPreview();
+
+    }
+
+
+    // ==================================================
+    // Day changed
+    // ==================================================
+
+    daySelect.addEventListener(
+        "change",
+        () => {
+
+            loadDay();
+
+        }
+    );
+
+
+    // ==================================================
+    // Button events
+    // ==================================================
+
+    document
+        .getElementById("addBtn")
+        .addEventListener(
+            "click",
+            addEntry
+        );
+
+
+    document
+        .getElementById("saveBtn")
+        .addEventListener(
+            "click",
+            saveTimetable
+        );
+
+
+    document
+        .getElementById("copyBtn")
+        .addEventListener(
+            "click",
+            copyJSON
+        );
+
+
+    document
+        .getElementById("downloadBtn")
+        .addEventListener(
+            "click",
+            downloadJSON
+        );
+
+
+    document
+        .getElementById("clearBtn")
+        .addEventListener(
+            "click",
+            clearDay
+        );
+
+
+    // ==================================================
+    // Start
+    // ==================================================
+
+    loadTimetable();
+
+</script>
+
+</body>
+
+</html>
