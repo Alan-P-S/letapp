@@ -41,7 +41,9 @@ h1 {
 .camera {
     position: relative;
     width: 100%;
-    background: #000;
+    max-width: 700px;
+    margin: auto;
+    background: black;
     border-radius: 18px;
     overflow: hidden;
 }
@@ -54,105 +56,116 @@ video {
 
 canvas {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
+
     width: 100%;
     height: 100%;
+
     transform: scaleX(-1);
+
+    pointer-events: none;
 }
 
 .status {
     position: absolute;
     top: 15px;
     left: 15px;
+
     padding: 10px 15px;
+
     border-radius: 20px;
+
     background: rgba(0,0,0,.7);
+
     font-weight: bold;
+
+    z-index: 10;
 }
 
 .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+
     gap: 12px;
+
     margin-top: 15px;
 }
 
 .card {
     background: #181b23;
+
     padding: 18px;
+
     border-radius: 15px;
+
     text-align: center;
 }
 
 .card span {
     display: block;
+
     color: #9ca3af;
+
     font-size: 13px;
+
     margin-bottom: 8px;
 }
 
 .card strong {
-    font-size: 28px;
+    font-size: 25px;
 }
 
 button {
     width: 100%;
-    margin-top: 15px;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    background: #6366f1;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-}
 
-button:hover {
-    background: #4f46e5;
+    margin-top: 15px;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #6366f1;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
 }
 
 .instructions {
     background: #181b23;
+
     margin-top: 15px;
+
     padding: 18px;
+
     border-radius: 15px;
-}
 
-.instructions h3 {
-    margin-bottom: 10px;
-}
-
-.instructions p {
-    color: #aeb4c0;
     line-height: 1.6;
-}
 
-.good {
-    color: #22c55e;
-}
-
-.warning {
-    color: #f59e0b;
-}
-
-.bad {
-    color: #ef4444;
+    color: #b5bac5;
 }
 
 @media(max-width:600px) {
 
+    body {
+        padding: 10px;
+    }
+
     .stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+    }
+
+    .card {
+        padding: 12px 5px;
     }
 
     .card strong {
-        font-size: 24px;
-    }
-
-    h1 {
-        font-size: 22px;
+        font-size: 18px;
     }
 }
 </style>
@@ -162,432 +175,822 @@ button:hover {
 
 <div class="container">
 
-    <h1>🏋️ AI Squat Detector</h1>
+<h1>🏋️ AI Squat Detector</h1>
 
-    <p class="subtitle">
-        Real-time squat detection using TensorFlow.js + MoveNet
-    </p>
+<p class="subtitle">
+Real-time pose detection using MoveNet
+</p>
 
-    <div class="camera">
 
-        <video id="video" autoplay playsinline></video>
+<div class="camera">
 
-        <canvas id="canvas"></canvas>
+    <video
+        id="video"
+        autoplay
+        playsinline>
+    </video>
 
-        <div id="status" class="status">
-            Starting AI...
-        </div>
+    <canvas id="canvas"></canvas>
 
-    </div>
-
-    <div class="stats">
-
-        <div class="card">
-            <span>Squats</span>
-            <strong id="count">0</strong>
-        </div>
-
-        <div class="card">
-            <span>Knee Angle</span>
-            <strong id="angle">0°</strong>
-        </div>
-
-        <div class="card">
-            <span>Position</span>
-            <strong id="position">Standing</strong>
-        </div>
-
-    </div>
-
-    <button onclick="resetCounter()">
-        Reset Counter
-    </button>
-
-    <div class="instructions">
-
-        <h3>How to use</h3>
-
-        <p>
-            1. Allow camera access.<br>
-            2. Stand where your whole body is visible.<br>
-            3. Face the camera sideways or slightly angled.<br>
-            4. Squat down until your knee angle becomes small.<br>
-            5. Stand back up completely.<br>
-            6. The AI counts one completed squat.
-        </p>
-
+    <div
+        id="status"
+        class="status">
+        Starting...
     </div>
 
 </div>
 
+
+<div class="stats">
+
+    <div class="card">
+        <span>Squats</span>
+        <strong id="count">0</strong>
+    </div>
+
+    <div class="card">
+        <span>Knee Angle</span>
+        <strong id="angle">0°</strong>
+    </div>
+
+    <div class="card">
+        <span>Position</span>
+        <strong id="position">---</strong>
+    </div>
+
+</div>
+
+
+<button onclick="resetCounter()">
+Reset Counter
+</button>
+
+
+<div class="instructions">
+
+<h3>How to use</h3>
+
+<p>
+Stand far enough from the phone so your entire body is visible.
+<br>
+Face sideways or slightly toward the camera.
+<br>
+The skeleton will be 🔴 red when not squatting.
+<br>
+The skeleton will become 🟢 green when a squat is detected.
+</p>
+
+</div>
+
+</div>
+
+
 <script>
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const video =
+    document.getElementById("video");
 
-const statusText = document.getElementById("status");
-const countText = document.getElementById("count");
-const angleText = document.getElementById("angle");
-const positionText = document.getElementById("position");
+const canvas =
+    document.getElementById("canvas");
 
-let detector;
+const ctx =
+    canvas.getContext("2d");
+
+const statusText =
+    document.getElementById("status");
+
+const countText =
+    document.getElementById("count");
+
+const angleText =
+    document.getElementById("angle");
+
+const positionText =
+    document.getElementById("position");
+
+
+let detector = null;
 
 let squatCount = 0;
 
 let state = "standing";
 
-let lastAngle = 180;
+
+/* =====================================================
+   MOVE NET KEYPOINT INDICES
+===================================================== */
+
+/*
+MoveNet returns keypoints in this order:
+
+0  nose
+1  left_eye
+2  right_eye
+3  left_ear
+4  right_ear
+5  left_shoulder
+6  right_shoulder
+7  left_elbow
+8  right_elbow
+9  left_wrist
+10 right_wrist
+11 left_hip
+12 right_hip
+13 left_knee
+14 right_knee
+15 left_ankle
+16 right_ankle
+*/
 
 
-/* =========================
+const KEYPOINT = {
+
+    nose: 0,
+
+    left_eye: 1,
+    right_eye: 2,
+
+    left_ear: 3,
+    right_ear: 4,
+
+    left_shoulder: 5,
+    right_shoulder: 6,
+
+    left_elbow: 7,
+    right_elbow: 8,
+
+    left_wrist: 9,
+    right_wrist: 10,
+
+    left_hip: 11,
+    right_hip: 12,
+
+    left_knee: 13,
+    right_knee: 14,
+
+    left_ankle: 15,
+    right_ankle: 16
+
+};
+
+
+/* =====================================================
+   SKELETON CONNECTIONS
+===================================================== */
+
+const CONNECTIONS = [
+
+    ["nose", "left_eye"],
+    ["nose", "right_eye"],
+
+    ["left_eye", "left_ear"],
+    ["right_eye", "right_ear"],
+
+    ["left_shoulder", "right_shoulder"],
+
+    ["left_shoulder", "left_elbow"],
+    ["left_elbow", "left_wrist"],
+
+    ["right_shoulder", "right_elbow"],
+    ["right_elbow", "right_wrist"],
+
+    ["left_shoulder", "left_hip"],
+    ["right_shoulder", "right_hip"],
+
+    ["left_hip", "right_hip"],
+
+    ["left_hip", "left_knee"],
+    ["left_knee", "left_ankle"],
+
+    ["right_hip", "right_knee"],
+    ["right_knee", "right_ankle"]
+
+];
+
+
+/* =====================================================
    CAMERA
-========================= */
+===================================================== */
 
 async function startCamera() {
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-            facingMode: "user",
-            width: 640,
-            height: 480
-        },
-        audio: false
-    });
+    if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ) {
+
+        throw new Error(
+            "Camera API unavailable. Use HTTPS."
+        );
+
+    }
+
+
+    const stream =
+        await navigator.mediaDevices.getUserMedia({
+
+            video: {
+
+                facingMode: "user",
+
+                width: {
+                    ideal: 640
+                },
+
+                height: {
+                    ideal: 480
+                }
+
+            },
+
+            audio: false
+
+        });
+
 
     video.srcObject = stream;
 
+
     await new Promise(resolve => {
+
         video.onloadedmetadata = resolve;
+
     });
+
+
+    await video.play();
+
+
+    /*
+    IMPORTANT:
+    Set canvas to the actual
+    video resolution.
+    */
+
+    canvas.width =
+        video.videoWidth;
+
+    canvas.height =
+        video.videoHeight;
+
+
+    console.log(
+        "Video:",
+        video.videoWidth,
+        video.videoHeight
+    );
+
 }
 
 
-/* =========================
+/* =====================================================
    LOAD MODEL
-========================= */
+===================================================== */
 
 async function loadModel() {
 
-    statusText.textContent = "Loading AI model...";
+    statusText.textContent =
+        "Loading AI...";
 
-    const model = poseDetection.SupportedModels.MoveNet;
 
-    detector = await poseDetection.createDetector(
-        model,
-        {
-            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
-        }
-    );
+    await tf.ready();
 
-    statusText.textContent = "AI Ready";
 
-    detectPose();
+    detector =
+        await poseDetection.createDetector(
+
+            poseDetection.SupportedModels.MoveNet,
+
+            {
+
+                modelType:
+                    poseDetection.movenet.modelType
+                    .SINGLEPOSE_LIGHTNING
+
+            }
+
+        );
+
+
+    statusText.textContent =
+        "AI Ready";
+
 }
 
 
-/* =========================
-   ANGLE CALCULATION
-========================= */
-
-/*
-        HIP
-         ●
-          \
-           \
-            ● KNEE
-             \
-              \
-               ● ANKLE
-
-We calculate:
-
-HIP → KNEE → ANKLE
-
-*/
-
-function calculateAngle(A, B, C) {
-
-    const radians =
-        Math.atan2(C.y - B.y, C.x - B.x) -
-        Math.atan2(A.y - B.y, A.x - B.x);
-
-    let angle = Math.abs(radians * 180 / Math.PI);
-
-    if (angle > 180) {
-        angle = 360 - angle;
-    }
-
-    return angle;
-}
-
-
-/* =========================
-   KEYPOINT HELPER
-========================= */
+/* =====================================================
+   GET KEYPOINT
+===================================================== */
 
 function getPoint(keypoints, name) {
 
-    const point = keypoints.find(
-        p => p.name === name
-    );
+    const index =
+        KEYPOINT[name];
 
-    if (!point || point.score < 0.4) {
+    const point =
+        keypoints[index];
+
+
+    if (!point) {
         return null;
     }
 
+
+    if (
+        point.score === undefined ||
+        point.score < 0.3
+    ) {
+
+        return null;
+
+    }
+
+
     return point;
+
 }
 
 
-/* =========================
+/* =====================================================
+   CALCULATE ANGLE
+===================================================== */
+
+function calculateAngle(A, B, C) {
+
+    const BA = {
+
+        x: A.x - B.x,
+        y: A.y - B.y
+
+    };
+
+
+    const BC = {
+
+        x: C.x - B.x,
+        y: C.y - B.y
+
+    };
+
+
+    const dot =
+        BA.x * BC.x +
+        BA.y * BC.y;
+
+
+    const magnitudeBA =
+        Math.sqrt(
+            BA.x * BA.x +
+            BA.y * BA.y
+        );
+
+
+    const magnitudeBC =
+        Math.sqrt(
+            BC.x * BC.x +
+            BC.y * BC.y
+        );
+
+
+    if (
+        magnitudeBA === 0 ||
+        magnitudeBC === 0
+    ) {
+
+        return 180;
+
+    }
+
+
+    let cosine =
+        dot /
+        (magnitudeBA * magnitudeBC);
+
+
+    cosine =
+        Math.max(
+            -1,
+            Math.min(1, cosine)
+        );
+
+
+    return Math.acos(cosine)
+        * 180 / Math.PI;
+
+}
+
+
+/* =====================================================
    DRAW SKELETON
-========================= */
+===================================================== */
 
-function drawPoint(point) {
+function drawSkeleton(
+    keypoints,
+    isSquatting
+) {
 
-    ctx.beginPath();
+    /*
+    RED = standing/moving
 
-    ctx.arc(
-        point.x,
-        point.y,
-        6,
-        0,
-        Math.PI * 2
-    );
+    GREEN = squat
+    */
 
-    ctx.fillStyle = "#22c55e";
+    const color =
+        isSquatting
+        ? "#22c55e"
+        : "#ef4444";
 
-    ctx.fill();
+
+    /*
+    Draw bones
+    */
+
+    for (
+        const connection
+        of CONNECTIONS
+    ) {
+
+        const start =
+            getPoint(
+                keypoints,
+                connection[0]
+            );
+
+        const end =
+            getPoint(
+                keypoints,
+                connection[1]
+            );
+
+
+        if (!start || !end) {
+            continue;
+        }
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            start.x,
+            start.y
+        );
+
+        ctx.lineTo(
+            end.x,
+            end.y
+        );
+
+
+        ctx.strokeStyle =
+            color;
+
+        ctx.lineWidth = 7;
+
+        ctx.lineCap =
+            "round";
+
+        ctx.stroke();
+
+    }
+
+
+    /*
+    Draw joints
+    */
+
+    for (
+        const point
+        of keypoints
+    ) {
+
+        if (
+            !point ||
+            point.score < 0.3
+        ) {
+
+            continue;
+
+        }
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            point.x,
+            point.y,
+
+            8,
+
+            0,
+            Math.PI * 2
+
+        );
+
+
+        ctx.fillStyle =
+            color;
+
+        ctx.fill();
+
+
+        /*
+        White outline
+        */
+
+        ctx.strokeStyle =
+            "#ffffff";
+
+        ctx.lineWidth = 2;
+
+        ctx.stroke();
+
+    }
+
 }
 
 
-function drawLine(a, b) {
-
-    ctx.beginPath();
-
-    ctx.moveTo(a.x, a.y);
-
-    ctx.lineTo(b.x, b.y);
-
-    ctx.strokeStyle = "#6366f1";
-
-    ctx.lineWidth = 4;
-
-    ctx.stroke();
-}
-
-
-/* =========================
-   POSE DETECTION
-========================= */
+/* =====================================================
+   DETECT POSE
+===================================================== */
 
 async function detectPose() {
 
-    if (!detector) return;
-
-    const poses = await detector.estimatePoses(video);
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    if (poses.length === 0) {
-
-        statusText.textContent =
-            "No person detected";
-
-        requestAnimationFrame(detectPose);
-
-        return;
-    }
-
-    const keypoints = poses[0].keypoints;
-
-    const leftHip = getPoint(
-        keypoints,
-        "left_hip"
-    );
-
-    const leftKnee = getPoint(
-        keypoints,
-        "left_knee"
-    );
-
-    const leftAnkle = getPoint(
-        keypoints,
-        "left_ankle"
-    );
-
-
-    const rightHip = getPoint(
-        keypoints,
-        "right_hip"
-    );
-
-    const rightKnee = getPoint(
-        keypoints,
-        "right_knee"
-    );
-
-    const rightAnkle = getPoint(
-        keypoints,
-        "right_ankle"
-    );
-
-
-    /*
-       Prefer whichever side
-       has better confidence.
-    */
-
-    let hip;
-    let knee;
-    let ankle;
-
-    if (
-        leftHip &&
-        leftKnee &&
-        leftAnkle
-    ) {
-
-        hip = leftHip;
-        knee = leftKnee;
-        ankle = leftAnkle;
-
-    } else if (
-        rightHip &&
-        rightKnee &&
-        rightAnkle
-    ) {
-
-        hip = rightHip;
-        knee = rightKnee;
-        ankle = rightAnkle;
-
-    } else {
-
-        statusText.textContent =
-            "Move so your legs are visible";
-
-        requestAnimationFrame(detectPose);
-
+    if (!detector) {
         return;
     }
 
 
-    /* Draw skeleton */
+    try {
 
-    drawPoint(hip);
-    drawPoint(knee);
-    drawPoint(ankle);
-
-    drawLine(hip, knee);
-    drawLine(knee, ankle);
+        const poses =
+            await detector.estimatePoses(
+                video
+            );
 
 
-    /* Calculate angle */
+        /*
+        Clear previous skeleton
+        */
 
-    const angle = calculateAngle(
-        hip,
-        knee,
-        ankle
+        ctx.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        if (
+            !poses ||
+            poses.length === 0
+        ) {
+
+            statusText.textContent =
+                "No person detected";
+
+            requestAnimationFrame(
+                detectPose
+            );
+
+            return;
+
+        }
+
+
+        const keypoints =
+            poses[0].keypoints;
+
+
+        /*
+        Get left leg
+        */
+
+        const leftHip =
+            getPoint(
+                keypoints,
+                "left_hip"
+            );
+
+        const leftKnee =
+            getPoint(
+                keypoints,
+                "left_knee"
+            );
+
+        const leftAnkle =
+            getPoint(
+                keypoints,
+                "left_ankle"
+            );
+
+
+        /*
+        Get right leg
+        */
+
+        const rightHip =
+            getPoint(
+                keypoints,
+                "right_hip"
+            );
+
+        const rightKnee =
+            getPoint(
+                keypoints,
+                "right_knee"
+            );
+
+        const rightAnkle =
+            getPoint(
+                keypoints,
+                "right_ankle"
+            );
+
+
+        let angle = null;
+
+
+        /*
+        Calculate whichever leg
+        has better visibility.
+        */
+
+        if (
+            leftHip &&
+            leftKnee &&
+            leftAnkle
+        ) {
+
+            angle =
+                calculateAngle(
+                    leftHip,
+                    leftKnee,
+                    leftAnkle
+                );
+
+        }
+
+
+        if (
+            rightHip &&
+            rightKnee &&
+            rightAnkle
+        ) {
+
+            const rightAngle =
+                calculateAngle(
+                    rightHip,
+                    rightKnee,
+                    rightAnkle
+                );
+
+
+            /*
+            If left doesn't exist,
+            use right.
+
+            Otherwise average both.
+            */
+
+            if (angle === null) {
+
+                angle =
+                    rightAngle;
+
+            }
+
+            else {
+
+                angle =
+                    (angle + rightAngle) / 2;
+
+            }
+
+        }
+
+
+        if (angle !== null) {
+
+            angleText.textContent =
+                Math.round(angle) + "°";
+
+        }
+
+
+        /*
+        Squat threshold
+        */
+
+        const isSquatting =
+            angle !== null &&
+            angle < 110;
+
+
+        /*
+        DRAW SKELETON
+        */
+
+        drawSkeleton(
+            keypoints,
+            isSquatting
+        );
+
+
+        /*
+        SQUAT STATE
+        */
+
+        if (isSquatting) {
+
+            positionText.textContent =
+                "Squatting";
+
+            positionText.style.color =
+                "#22c55e";
+
+            statusText.textContent =
+                "🟢 SQUAT";
+
+
+            if (
+                state === "standing"
+            ) {
+
+                state =
+                    "squatting";
+
+            }
+
+        }
+
+        else if (
+            angle !== null &&
+            angle > 155
+        ) {
+
+            positionText.textContent =
+                "Standing";
+
+            positionText.style.color =
+                "#ef4444";
+
+            statusText.textContent =
+                "🔴 STANDING";
+
+
+            if (
+                state === "squatting"
+            ) {
+
+                squatCount++;
+
+                countText.textContent =
+                    squatCount;
+
+                state =
+                    "standing";
+
+            }
+
+        }
+
+        else {
+
+            positionText.textContent =
+                "Moving";
+
+            positionText.style.color =
+                "#f59e0b";
+
+            statusText.textContent =
+                "🟠 MOVING";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Pose error:",
+            error
+        );
+
+    }
+
+
+    requestAnimationFrame(
+        detectPose
     );
 
-    lastAngle = angle;
-
-    angleText.textContent =
-        Math.round(angle) + "°";
-
-
-    /* =========================
-       SQUAT LOGIC
-    ========================= */
-
-    /*
-       Standing:
-       approximately 160° - 180°
-
-       Squatting:
-       approximately 70° - 120°
-
-       These values can be adjusted.
-    */
-
-
-    if (angle < 110) {
-
-        positionText.textContent =
-            "Squatting";
-
-        positionText.className =
-            "good";
-
-        statusText.textContent =
-            "⬇️ Squat";
-
-        /*
-           Only change state once.
-        */
-
-        if (state === "standing") {
-
-            state = "squatting";
-        }
-
-    }
-
-    else if (angle > 155) {
-
-        positionText.textContent =
-            "Standing";
-
-        positionText.className =
-            "good";
-
-        statusText.textContent =
-            "⬆️ Stand";
-
-        /*
-           Squatting → Standing
-           = one completed squat
-        */
-
-        if (state === "squatting") {
-
-            squatCount++;
-
-            countText.textContent =
-                squatCount;
-
-            state = "standing";
-        }
-
-    }
-
-    else {
-
-        positionText.textContent =
-            "Moving";
-
-        positionText.className =
-            "warning";
-
-        statusText.textContent =
-            "Keep moving";
-    }
-
-
-    requestAnimationFrame(detectPose);
 }
 
 
-/* =========================
+/* =====================================================
    RESET
-========================= */
+===================================================== */
 
 function resetCounter() {
 
@@ -595,34 +998,54 @@ function resetCounter() {
 
     state = "standing";
 
-    countText.textContent = "0";
+    countText.textContent =
+        "0";
+
 }
 
 
-/* =========================
-   START
-========================= */
+/* =====================================================
+   START EVERYTHING
+===================================================== */
 
 async function start() {
 
     try {
 
+        statusText.textContent =
+            "Starting camera...";
+
+
         await startCamera();
+
+
+        statusText.textContent =
+            "Loading AI...";
+
 
         await loadModel();
 
-    } catch (error) {
+
+        detectPose();
+
+    }
+
+    catch (error) {
 
         console.error(error);
 
+
         statusText.textContent =
-            "Camera / AI error";
+            "Camera error";
+
 
         alert(
-            "Could not start camera.\n\n" +
+            "Could not start camera:\n\n" +
             error.message
         );
+
     }
+
 }
 
 
