@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Squat Hold Tracker</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0f1117;
+        color: #f5f5f5;
+            padding: 16px;
+        }
+
+        .tracker {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* Stats */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .stat {
+             background: #181b23;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .stat span {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .stat strong {
+            font-size: 20px;
+        }
+
+        /* Graph */
+
+        .chart-card {
+            background: #181b23;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 15px;
+        }
+
+        .chart-header h2 {
+            font-size: 17px;
+        }
+
+        .chart-header span {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 380px;
+        }
+
+        /* Loading */
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+        }
+
+        /* Error */
+
+        .error {
+            color: #dc2626;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Mobile */
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 21px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat {
+                background: #181b23;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+            }
+
+            .stat strong {
+                font-size: 18px;
+            }
+
+            .chart-card {
+                 background: #181b23;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="tracker">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <h1>
+            🏋️ Squat Hold Tracker
+        </h1>
+
+        <p>
+            Track your squat hold duration over time
+        </p>
+
+    </div>
+
+
+    <!-- STATS -->
+
+    <div class="stats">
+
+        <div class="stat">
+
+            <span>
+                Best Hold
+            </span>
+
+            <strong id="bestHold">
+                0s
+            </strong>
+
+        </div>
+
+
+        <div class="stat">
+
+            <span>
+                Average Hold
+            </span>
+
+            <strong id="averageHold">
+                0s
+            </strong>
+
+        </div>
+
+
+        <div class="stat">
+
+            <span>
+                Total Sessions
+            </span>
+
+            <strong id="totalSessions">
+                0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- GRAPH -->
+
+    <div class="chart-card">
+
+        <div class="chart-header">
+
+            <h2>
+                Hold Duration
+            </h2>
+
+            <span>
+                Seconds
+            </span>
+
+        </div>
+
+
+        <div
+            id="loading"
+            class="loading"
+        >
+            Loading squat data...
+        </div>
+
+
+        <div
+            id="chartContainer"
+            class="chart-container"
+            style="display:none;"
+        >
+
+            <canvas id="squatChart"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+    =====================================================
+    API
+    =====================================================
+    */
+
+    const API_URL =
+        "http://localhost:3000/api/accademic/squat-hold";
+
+
+    let squatChart = null;
+
+
+    /*
+    =====================================================
+    FETCH DATA
+    =====================================================
+    */
+
+    async function loadSquatData() {
+
+        try {
+
+            // const response =
+            //     await fetch(API_URL);
+
+
+            // if (!response.ok) {
+
+            //     throw new Error(
+            //         `Server returned ${response.status}`
+            //     );
+
+            // }
+
+
+            // const result =
+            //     await response.json();
+
+
+            // console.log(
+            //     "Squat API:",
+            //     result
+            // );
+
+
+            /*
+            ---------------------------------------------
+            Get JSON data
+            ---------------------------------------------
+            */
+
+            // const data =
+            //     result.data || result;
+
+            const data = [
+        {
+            "date": "2026-09-25",
+            "time": "07:30:00",
+            "duration": 45
+        },
+        {
+            "date": "2026-09-26",
+            "time": "07:45:00",
+            "duration": 52
+        },
+        {
+            "date": "2026-09-27",
+            "time": "08:00:00",
+            "duration": 61
+        },
+        {
+            "date": "2026-09-28",
+            "time": "07:30:00",
+            "duration": 75
+        }
+    ]
+
+
+            if (!Array.isArray(data)) {
+
+                throw new Error(
+                    "Invalid JSON format"
+                );
+
+            }
+
+
+            /*
+            ---------------------------------------------
+            Sort by date and time
+            ---------------------------------------------
+            */
+
+            data.sort((a, b) => {
+
+                const dateA =
+                    new Date(
+                        `${a.date}T${a.time}`
+                    );
+
+                const dateB =
+                    new Date(
+                        `${b.date}T${b.time}`
+                    );
+
+                return dateA - dateB;
+
+            });
+
+
+            /*
+            ---------------------------------------------
+            Create graph
+            ---------------------------------------------
+            */
+
+            createChart(data);
+
+
+            /*
+            ---------------------------------------------
+            Statistics
+            ---------------------------------------------
+            */
+
+            updateStats(data);
+
+
+            /*
+            ---------------------------------------------
+            Hide loading
+            ---------------------------------------------
+            */
+
+            document.getElementById(
+                "loading"
+            ).style.display = "none";
+
+
+            document.getElementById(
+                "chartContainer"
+            ).style.display = "block";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            document.getElementById(
+                "loading"
+            ).innerHTML = `
+                <div class="error">
+                    Failed to load squat data.
+                    <br><br>
+                    ${error.message}
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    /*
+    =====================================================
+    CREATE CHART
+    =====================================================
+    */
+
+    function createChart(data) {
+
+        const labels =
+            data.map(item => {
+
+                return formatDateTime(
+                    item.date,
+                    item.time
+                );
+
+            });
+
+
+        const durations =
+            data.map(item =>
+                Number(item.duration || 0)
+            );
+
+
+        const ctx =
+            document
+                .getElementById("squatChart")
+                .getContext("2d");
+
+
+        if (squatChart) {
+
+            squatChart.destroy();
+
+        }
+
+
+        squatChart =
+            new Chart(ctx, {
+
+                type: "line",
+
+
+                data: {
+
+                    labels: labels,
+
+                    datasets: [{
+
+                        label:
+                            "Squat Hold",
+
+                        data:
+                            durations,
+
+                        borderWidth: 3,
+
+                        pointRadius: 5,
+
+                        pointHoverRadius: 8,
+
+                        tension: 0.3,
+
+                        fill: true,
+
+                        backgroundColor:
+                            "rgba(99, 102, 241, 0.12)",
+
+                        borderColor:
+                            "#6366f1"
+
+                    }]
+
+                },
+
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+
+                    interaction: {
+
+                        mode: "index",
+
+                        intersect: false
+
+                    },
+
+
+                    plugins: {
+
+                        legend: {
+
+                            display: false
+
+                        },
+
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                title:
+                                    function(context) {
+
+                                        return context[0].label;
+
+                                    },
+
+
+                                label:
+                                    function(context) {
+
+                                        return (
+                                            " Hold: " +
+                                            formatDuration(
+                                                context.raw
+                                            )
+                                        );
+
+                                    }
+
+                            }
+
+                        }
+
+                    },
+
+
+                    scales: {
+
+                        x: {
+
+                            title: {
+
+                                display: true,
+
+                                text: "Date / Time"
+
+                            },
+
+                            grid: {
+
+                                display: false
+
+                            }
+
+                        },
+
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Hold Duration"
+
+                            },
+
+                            ticks: {
+
+                                callback:
+                                    function(value) {
+
+                                        return value + "s";
+
+                                    }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /*
+    =====================================================
+    STATISTICS
+    =====================================================
+    */
+
+    function updateStats(data) {
+
+        if (data.length === 0) {
+
+            return;
+
+        }
+
+
+        const durations =
+            data.map(item =>
+                Number(item.duration || 0)
+            );
+
+
+        /*
+        Best
+        */
+
+        const best =
+            Math.max(...durations);
+
+
+        document.getElementById(
+            "bestHold"
+        ).textContent =
+            formatDuration(best);
+
+
+        /*
+        Average
+        */
+
+        const total =
+            durations.reduce(
+                (sum, value) =>
+                    sum + value,
+                0
+            );
+
+
+        const average =
+            total / durations.length;
+
+
+        document.getElementById(
+            "averageHold"
+        ).textContent =
+            formatDuration(average);
+
+
+        /*
+        Sessions
+        */
+
+        document.getElementById(
+            "totalSessions"
+        ).textContent =
+            data.length;
+
+    }
+
+
+    /*
+    =====================================================
+    FORMAT DURATION
+    =====================================================
+    */
+
+    function formatDuration(seconds) {
+
+        seconds =
+            Math.round(Number(seconds));
+
+
+        const minutes =
+            Math.floor(
+                seconds / 60
+            );
+
+
+        const remainingSeconds =
+            seconds % 60;
+
+
+        if (minutes === 0) {
+
+            return `${remainingSeconds}s`;
+
+        }
+
+
+        return `${minutes}m ${remainingSeconds}s`;
+
+    }
+
+
+    /*
+    =====================================================
+    FORMAT DATE + TIME
+    =====================================================
+    */
+
+    function formatDateTime(
+        date,
+        time
+    ) {
+
+        const dateTime =
+            new Date(
+                `${date}T${time}`
+            );
+
+
+        return dateTime.toLocaleString(
+            undefined,
+            {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit"
+            }
+        );
+
+    }
+
+
+    /*
+    =====================================================
+    START
+    =====================================================
+    */
+
+    loadSquatData();
+
+</script>
+
+</body>
+</html>
