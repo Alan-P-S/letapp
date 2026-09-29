@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Study Analytics</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 30px;
+
+            font-family: Arial, Helvetica, sans-serif;
+
+            background: #f4f6fb;
+        }
+
+        /* =========================
+           MAIN CARD
+        ========================= */
+
+        .study-card {
+            width: 100%;
+            max-width: 1100px;
+
+            margin: auto;
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 28px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .study-header {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 25px;
+        }
+
+        .study-header h2 {
+            font-size: 25px;
+
+            color: #20232a;
+
+            margin-bottom: 6px;
+        }
+
+        .study-header p {
+            color: #777;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           TOTAL TIME
+        ========================= */
+
+        .total-time {
+            text-align: right;
+        }
+
+        .total-time span {
+            display: block;
+
+            color: #888;
+
+            font-size: 12px;
+
+            margin-bottom: 4px;
+        }
+
+        .total-time strong {
+            font-size: 22px;
+
+            color: #222;
+        }
+
+
+        /* =========================
+           CHART
+        ========================= */
+
+        .chart-container {
+            position: relative;
+
+            width: 100%;
+
+            height: 420px;
+        }
+
+
+        /* =========================
+           SUBJECT SECTION
+        ========================= */
+
+        .subject-section {
+            margin-top: 25px;
+        }
+
+        .subject-section h3 {
+            font-size: 16px;
+
+            margin-bottom: 14px;
+
+            color: #333;
+        }
+
+        .subject-toggles {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+        }
+
+
+        /* =========================
+           SUBJECT BUTTON
+        ========================= */
+
+        .subject-toggle {
+            border: none;
+
+            background: #f1f3f7;
+
+            padding: 10px 15px;
+
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            font-size: 14px;
+
+            color: #555;
+
+            transition: 0.2s;
+        }
+
+        .subject-toggle:hover {
+            background: #e6e8ed;
+        }
+
+        .subject-toggle.active {
+            background: #222;
+
+            color: white;
+        }
+
+
+        /* =========================
+           SUBJECT COLOR
+        ========================= */
+
+        .subject-color {
+            width: 10px;
+
+            height: 10px;
+
+            border-radius: 50%;
+
+            flex-shrink: 0;
+        }
+
+
+        /* =========================
+           LOADING
+        ========================= */
+
+        .loading {
+            text-align: center;
+
+            padding: 30px;
+
+            color: #777;
+        }
+
+
+        /* =========================
+           ERROR
+        ========================= */
+
+        .error {
+            text-align: center;
+
+            padding: 30px;
+
+            color: #dc2626;
+
+            background: #fef2f2;
+
+            border-radius: 10px;
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .study-card {
+                padding: 20px;
+
+                border-radius: 15px;
+            }
+
+            .study-header {
+                align-items: flex-start;
+            }
+
+            .study-header h2 {
+                font-size: 20px;
+            }
+
+            .total-time strong {
+                font-size: 17px;
+            }
+
+            .chart-container {
+                height: 320px;
+            }
+
+            .subject-toggle {
+                padding: 8px 11px;
+
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <div class="study-card">
+
+        <!-- HEADER -->
+
+        <div class="study-header">
+
+            <div>
+
+                <h2>
+                    Study Analytics
+                </h2>
+
+                <p>
+                    Track your study time by subject
+                </p>
+
+            </div>
+
+
+            <div class="total-time">
+
+                <span>
+                    Total Study Time
+                </span>
+
+                <strong id="totalStudyTime">
+                    0h 0m
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- LOADING -->
+
+        <div
+            id="loading"
+            class="loading"
+        >
+            Loading study data...
+        </div>
+
+
+        <!-- CHART -->
+
+        <div
+            id="chartContainer"
+            class="chart-container"
+            style="display: none;"
+        >
+
+            <canvas id="studyChart"></canvas>
+
+        </div>
+
+
+        <!-- SUBJECT TOGGLES -->
+
+        <div class="subject-section">
+
+            <h3>
+                Subjects
+            </h3>
+
+            <div
+                id="subjectToggles"
+                class="subject-toggles"
+            ></div>
+
+        </div>
+
+    </div>
+
+
+<script>
+
+    /*
+    =====================================================
+    API
+    =====================================================
+    */
+
+    const API_URL =
+        "https://letbackend.onrender.com/api/accademic/study-section";
+
+
+    /*
+    =====================================================
+    SUBJECT COLORS
+    =====================================================
+    */
+
+    const subjectColors = {
+
+        Mathematics: "#6366f1",
+
+        Electronics: "#f59e0b",
+
+        Electrical: "#10b981",
+
+        Mechanical: "#ef4444",
+
+        Civil: "#8b5cf6",
+
+        Programming: "#06b6d4"
+    };
+
+
+    /*
+    =====================================================
+    VARIABLES
+    =====================================================
+    */
+
+    let studyChart = null;
+
+    let studyData = [];
+
+    let subjects = [];
+
+
+    /*
+    =====================================================
+    FETCH DATA
+    =====================================================
+    */
+
+    async function loadStudyData() {
+
+        try {
+
+            const response =
+                await fetch(API_URL);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Server returned ${response.status}`
+                );
+
+            }
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                "API Response:",
+                result
+            );
+
+
+            /*
+            ---------------------------------------------
+            Get data from API
+            ---------------------------------------------
+            */
+
+            studyData =
+                result.data || [];
+
+
+            /*
+            ---------------------------------------------
+            Make sure data exists
+            ---------------------------------------------
+            */
+
+            if (!Array.isArray(studyData)) {
+
+                throw new Error(
+                    "Invalid data format from API"
+                );
+
+            }
+
+
+            /*
+            ---------------------------------------------
+            Process data
+            ---------------------------------------------
+            */
+
+            createStudyGraph();
+
+
+            /*
+            ---------------------------------------------
+            Hide loading
+            ---------------------------------------------
+            */
+
+            document.getElementById(
+                "loading"
+            ).style.display = "none";
+
+
+            document.getElementById(
+                "chartContainer"
+            ).style.display = "block";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            document.getElementById(
+                "loading"
+            ).innerHTML = `
+                <div class="error">
+                    Failed to load study data.
+                    <br><br>
+                    ${error.message}
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    /*
+    =====================================================
+    CREATE GRAPH
+    =====================================================
+    */
+
+    function createStudyGraph() {
+
+
+        /*
+        ---------------------------------------------
+        Find all subjects
+        ---------------------------------------------
+        */
+
+        subjects = [
+            ...new Set(
+                studyData
+                    .map(session => session.subject)
+                    .filter(Boolean)
+            )
+        ];
+
+
+        /*
+        ---------------------------------------------
+        Sort sessions by date
+        ---------------------------------------------
+        */
+
+        studyData.sort(
+            (a, b) =>
+                new Date(a.date) -
+                new Date(b.date)
+        );
+
+
+        /*
+        ---------------------------------------------
+        Create date list
+        ---------------------------------------------
+        */
+
+        const dates = [
+            ...new Set(
+                studyData.map(
+                    session => session.date
+                )
+            )
+        ];
+
+
+        /*
+        ---------------------------------------------
+        Create datasets
+        ---------------------------------------------
+        */
+
+        const datasets =
+            subjects.map(subject => {
+
+
+                return {
+
+                    label: subject,
+
+                    data: dates.map(date => {
+
+
+                        /*
+                        Find all sessions for this
+                        subject and date
+                        */
+
+                        const sessions =
+                            studyData.filter(
+                                session =>
+                                    session.date === date &&
+                                    session.subject === subject
+                            );
+
+
+                        /*
+                        Add all durations
+                        */
+
+                        const totalSeconds =
+                            sessions.reduce(
+                                (total, session) =>
+                                    total +
+                                    Number(
+                                        session.durationSeconds || 0
+                                    ),
+
+                                0
+                            );
+
+
+                        /*
+                        Convert seconds to hours
+                        */
+
+                        return totalSeconds / 3600;
+
+                    }),
+
+
+                    backgroundColor:
+                        subjectColors[subject]
+                        || generateColor(subject),
+
+
+                    borderColor:
+                        subjectColors[subject]
+                        || generateColor(subject),
+
+
+                    borderWidth: 1,
+
+                    borderRadius: 5
+
+                };
+
+            });
+
+
+        /*
+        ---------------------------------------------
+        Chart
+        ---------------------------------------------
+        */
+
+        const canvas =
+            document.getElementById(
+                "studyChart"
+            );
+
+
+        const ctx =
+            canvas.getContext("2d");
+
+
+        /*
+        Destroy previous chart
+        */
+
+        if (studyChart) {
+
+            studyChart.destroy();
+
+        }
+
+
+        studyChart =
+            new Chart(ctx, {
+
+                type: "bar",
+
+
+                data: {
+
+                    labels:
+                        dates.map(
+                            formatDate
+                        ),
+
+                    datasets:
+                        datasets
+
+                },
+
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+
+                    interaction: {
+
+                        mode: "index",
+
+                        intersect: false
+
+                    },
+
+
+                    plugins: {
+
+                        legend: {
+
+                            display: false
+
+                        },
+
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label:
+                                    function(context) {
+
+                                        const value =
+                                            context.raw || 0;
+
+
+                                        return `
+                                            ${context.dataset.label}:
+                                            ${formatHours(value)}
+                                        `;
+
+                                    }
+
+                            }
+
+                        }
+
+                    },
+
+
+                    scales: {
+
+                        x: {
+
+                            stacked: false,
+
+                            title: {
+
+                                display: true,
+
+                                text: "Day"
+
+                            },
+
+                            grid: {
+
+                                display: false
+
+                            }
+
+                        },
+
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Study Time (Hours)"
+
+                            },
+
+
+                            ticks: {
+
+                                callback:
+                                    function(value) {
+
+                                        return value + "h";
+
+                                    }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+
+        /*
+        ---------------------------------------------
+        Create subject buttons
+        ---------------------------------------------
+        */
+
+        createSubjectToggles();
+
+
+        /*
+        ---------------------------------------------
+        Calculate total
+        ---------------------------------------------
+        */
+
+        calculateTotalTime();
+
+    }
+
+
+    /*
+    =====================================================
+    SUBJECT TOGGLES
+    =====================================================
+    */
+
+    function createSubjectToggles() {
+
+
+        const container =
+            document.getElementById(
+                "subjectToggles"
+            );
+
+
+        container.innerHTML = "";
+
+
+        subjects.forEach(
+            (subject, index) => {
+
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                button.className =
+                    "subject-toggle active";
+
+
+                const color =
+                    subjectColors[subject]
+                    || generateColor(subject);
+
+
+                button.innerHTML = `
+
+                    <span
+                        class="subject-color"
+                        style="
+                            background:${color}
+                        "
+                    ></span>
+
+                    ${subject}
+
+                `;
+
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+
+                        /*
+                        Toggle dataset
+                        */
+
+                        const dataset =
+                            studyChart
+                                .data
+                                .datasets[index];
+
+
+                        dataset.hidden =
+                            !dataset.hidden;
+
+
+                        button.classList.toggle(
+                            "active"
+                        );
+
+
+                        studyChart.update();
+
+                    }
+                );
+
+
+                container.appendChild(
+                    button
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+    =====================================================
+    TOTAL STUDY TIME
+    =====================================================
+    */
+
+    function calculateTotalTime() {
+
+
+        const totalSeconds =
+            studyData.reduce(
+                (total, session) => {
+
+                    return total +
+                        Number(
+                            session.durationSeconds || 0
+                        );
+
+                },
+
+                0
+            );
+
+
+        const totalHours =
+            totalSeconds / 3600;
+
+
+        document.getElementById(
+            "totalStudyTime"
+        ).textContent =
+            formatHours(totalHours);
+
+    }
+
+
+    /*
+    =====================================================
+    FORMAT HOURS
+    =====================================================
+    */
+
+    function formatHours(hours) {
+
+
+        const totalMinutes =
+            Math.round(hours * 60);
+
+
+        const h =
+            Math.floor(
+                totalMinutes / 60
+            );
+
+
+        const m =
+            totalMinutes % 60;
+
+
+        return `${h}h ${m}m`;
+
+    }
+
+
+    /*
+    =====================================================
+    FORMAT DATE
+    =====================================================
+    */
+
+    function formatDate(dateString) {
+
+
+        const date =
+            new Date(
+                dateString + "T00:00:00"
+            );
+
+
+        return date.toLocaleDateString(
+            undefined,
+            {
+                month: "short",
+                day: "numeric"
+            }
+        );
+
+    }
+
+
+    /*
+    =====================================================
+    GENERATE COLOR FOR UNKNOWN SUBJECT
+    =====================================================
+    */
+
+    function generateColor(subject) {
+
+
+        let hash = 0;
+
+
+        for (
+            let i = 0;
+            i < subject.length;
+            i++
+        ) {
+
+            hash =
+                subject.charCodeAt(i) +
+                ((hash << 5) - hash);
+
+        }
+
+
+        const color =
+            Math.abs(hash) % 360;
+
+
+        return `hsl(${color}, 70%, 50%)`;
+
+    }
+
+
+    /*
+    =====================================================
+    START
+    =====================================================
+    */
+
+    loadStudyData();
+
+</script>
+
+</body>
+
+</html>
