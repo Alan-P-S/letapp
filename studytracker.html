@@ -691,25 +691,67 @@
 
                         tooltip: {
 
-                            callbacks: {
+    callbacks: {
 
-                                label:
-                                    function(context) {
+        title: function(context) {
 
-                                        const value =
-                                            context.raw || 0;
+            return context[0].label;
 
+        },
 
-                                        return `
-                                            ${context.dataset.label}:
-                                            ${formatHours(value)}
-                                        `;
+        label: function(context) {
 
-                                    }
+            const subject =
+                context.dataset.label;
 
-                            }
+            const date =
+                dates[context.dataIndex];
 
-                        }
+            const sessions =
+                studyData.filter(session =>
+                    session.date === date &&
+                    session.subject === subject
+                );
+
+            const totalSeconds =
+                sessions.reduce(
+                    (total, session) =>
+                        total +
+                        Number(session.durationSeconds || 0),
+                    0
+                );
+
+            const time =
+                formatHours(totalSeconds / 3600);
+
+            return `${subject}: ${time}`;
+
+        },
+
+        afterLabel: function(context) {
+
+            const subject =
+                context.dataset.label;
+
+            const date =
+                dates[context.dataIndex];
+
+            const sessions =
+                studyData.filter(session =>
+                    session.date === date &&
+                    session.subject === subject
+                );
+
+            return sessions
+                .map(session =>
+                    `📖 ${session.description || "No description"}`
+                );
+
+        }
+
+    }
+
+}
 
                     },
 
