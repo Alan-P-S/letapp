@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Add Squat Hold</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f1117;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 30px auto;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #181b23;
+            padding: 22px;
+            border-radius: 18px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #d1d5db;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        input[type="date"],
+        input[type="time"] {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            border: 1px solid #303541;
+            background: #fcfdff;
+            color: rgb(29, 29, 29);
+            font-size: 16px;
+            outline: none;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 10px;
+            accent-color: #6366f1;
+        }
+
+        .duration-display {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 32px;
+            font-weight: bold;
+            color: #818cf8;
+        }
+
+        .duration-label {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: #6366f1;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .success {
+            display: block;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .error {
+            display: block;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        .preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #101218;
+            border-radius: 12px;
+        }
+
+        .preview h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #9ca3af;
+        }
+
+        pre {
+            color: #c4b5fd;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🏋️ Add Squat Hold</h1>
+
+    <p class="subtitle">
+        Record your squat hold session
+    </p>
+
+
+    <div class="card">
+
+        <!-- DATE -->
+
+        <div class="field">
+
+            <label for="date">
+                Date
+            </label>
+
+            <input
+                type="date"
+                id="date"
+            >
+
+        </div>
+
+
+        <!-- TIME -->
+
+        <div class="field">
+
+            <label for="time">
+                Time
+            </label>
+
+            <input
+                type="time"
+                id="time"
+            >
+
+        </div>
+
+
+        <!-- DURATION -->
+
+        <div class="field">
+
+            <label for="duration">
+                Hold Duration
+            </label>
+
+            <input
+                type="range"
+                id="duration"
+                min="0"
+                max="600"
+                step="1"
+                value="60"
+            >
+
+            <div
+                class="duration-display"
+                id="durationDisplay"
+            >
+                1m 0s
+            </div>
+
+            <div class="duration-label">
+                Maximum 10 minutes
+            </div>
+
+        </div>
+
+
+        <!-- SUBMIT -->
+
+        <button
+            id="submitBtn"
+            onclick="addSquatHold()"
+        >
+            Save Squat Hold
+        </button>
+
+
+        <!-- MESSAGE -->
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+
+        <!-- JSON PREVIEW -->
+
+        <div class="preview">
+
+            <h3>JSON that will be sent</h3>
+
+            <pre id="jsonPreview"></pre>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api/workout/squathold";
+
+
+const dateInput =
+    document.getElementById("date");
+
+const timeInput =
+    document.getElementById("time");
+
+const durationInput =
+    document.getElementById("duration");
+
+const durationDisplay =
+    document.getElementById("durationDisplay");
+
+const jsonPreview =
+    document.getElementById("jsonPreview");
+
+const message =
+    document.getElementById("message");
+
+const submitBtn =
+    document.getElementById("submitBtn");
+
+
+/* ==============================
+   DEFAULT DATE & TIME
+============================== */
+
+function setDefaultDateTime() {
+
+    const now = new Date();
+
+    const year =
+        now.getFullYear();
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
+
+    dateInput.value =
+        `${year}-${month}-${day}`;
+
+
+    const hours =
+        String(
+            now.getHours()
+        ).padStart(2, "0");
+
+    const minutes =
+        String(
+            now.getMinutes()
+        ).padStart(2, "0");
+
+
+    timeInput.value =
+        `${hours}:${minutes}`;
+
+}
+
+
+/* ==============================
+   FORMAT DURATION
+============================== */
+
+function formatDuration(seconds) {
+
+    seconds =
+        Number(seconds);
+
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    const remainingSeconds =
+        seconds % 60;
+
+
+    if (minutes === 0) {
+
+        return `${remainingSeconds}s`;
+
+    }
+
+
+    return `${minutes}m ${remainingSeconds}s`;
+
+}
+
+
+/* ==============================
+   UPDATE PREVIEW
+============================== */
+
+function updatePreview() {
+
+    const data = {
+
+        date: dateInput.value,
+
+        time:
+            timeInput.value + ":00",
+
+        duration:
+            Number(durationInput.value)
+
+    };
+
+
+    durationDisplay.textContent =
+        formatDuration(
+            data.duration
+        );
+
+
+    jsonPreview.textContent =
+        JSON.stringify(
+            data,
+            null,
+            4
+        );
+
+}
+
+
+durationInput.addEventListener(
+    "input",
+    updatePreview
+);
+
+dateInput.addEventListener(
+    "change",
+    updatePreview
+);
+
+timeInput.addEventListener(
+    "change",
+    updatePreview
+);
+
+
+/* ==============================
+   ADD SQUAT HOLD
+============================== */
+
+async function addSquatHold() {
+
+    message.className =
+        "message";
+
+    message.style.display =
+        "none";
+
+
+    const data = {
+
+        date: dateInput.value,
+
+        time:
+            timeInput.value + ":00",
+
+        duration:
+            Number(
+                durationInput.value
+            )
+
+    };
+
+
+    /* Validation */
+
+    if (!data.date) {
+
+        showMessage(
+            "Please select a date.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (!timeInput.value) {
+
+        showMessage(
+            "Please select a time.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (data.duration <= 0) {
+
+        showMessage(
+            "Duration must be greater than 0 seconds.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        submitBtn.disabled =
+            true;
+
+        submitBtn.textContent =
+            "Saving...";
+
+
+        const response =
+            await fetch(
+                API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify(data)
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message ||
+                `Server error: ${response.status}`
+            );
+
+        }
+
+
+        showMessage(
+            "✅ Squat hold saved successfully!",
+            "success"
+        );
+
+
+        console.log(
+            "Server response:",
+            result
+        );
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        showMessage(
+            "❌ " + error.message,
+            "error"
+        );
+
+    }
+
+    finally {
+
+        submitBtn.disabled =
+            false;
+
+        submitBtn.textContent =
+            "Save Squat Hold";
+
+    }
+
+}
+
+
+/* ==============================
+   MESSAGE
+============================== */
+
+function showMessage(
+    text,
+    type
+) {
+
+    message.textContent =
+        text;
+
+    message.className =
+        `message ${type}`;
+
+    message.style.display =
+        "block";
+
+}
+
+
+/* ==============================
+   INITIALIZE
+============================== */
+
+setDefaultDateTime();
+
+updatePreview();
+
+</script>
+
+</body>
+</html>

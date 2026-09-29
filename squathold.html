@@ -273,7 +273,7 @@
     */
 
     const API_URL =
-        "http://localhost:3000/api/accademic/squat-hold";
+        "http://localhost:3000/api/workout/squathold";
 
 
     let squatChart = null;
@@ -289,27 +289,27 @@
 
         try {
 
-            // const response =
-            //     await fetch(API_URL);
+            const response =
+                await fetch(API_URL);
 
 
-            // if (!response.ok) {
+            if (!response.ok) {
 
-            //     throw new Error(
-            //         `Server returned ${response.status}`
-            //     );
+                throw new Error(
+                    `Server returned ${response.status}`
+                );
 
-            // }
-
-
-            // const result =
-            //     await response.json();
+            }
 
 
-            // console.log(
-            //     "Squat API:",
-            //     result
-            // );
+            const result =
+                await response.json();
+
+
+            console.log(
+                "Squat API:",
+                result
+            );
 
 
             /*
@@ -318,31 +318,10 @@
             ---------------------------------------------
             */
 
-            // const data =
-            //     result.data || result;
+            const data =
+                result.data || result;
 
-            const data = [
-        {
-            "date": "2026-09-25",
-            "time": "07:30:00",
-            "duration": 45
-        },
-        {
-            "date": "2026-09-26",
-            "time": "07:45:00",
-            "duration": 52
-        },
-        {
-            "date": "2026-09-27",
-            "time": "08:00:00",
-            "duration": 61
-        },
-        {
-            "date": "2026-09-28",
-            "time": "07:30:00",
-            "duration": 75
-        }
-    ]
+          
 
 
             if (!Array.isArray(data)) {
