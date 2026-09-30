@@ -264,6 +264,48 @@ body {
     align-items: center;
 }
 
+
+.delete-btn {
+
+    background:
+        rgba(239,68,68,.12);
+
+    color:
+        #f87171;
+
+    border:
+        1px solid
+        rgba(239,68,68,.25);
+
+}
+
+
+.delete-btn:hover {
+
+    background:
+        rgba(239,68,68,.25);
+
+}
+
+
+.action-btn {
+
+    border: none;
+
+    padding: 10px 10px;
+
+    border-radius: 8px;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+
 .wear-label {
     color: #77839a;
     font-size: 11px;
@@ -467,6 +509,9 @@ body {
             <div class="logo-icon">
                 🧺
             </div>
+            <div class="logo-icon">
+            <a style="text-decoration: none;" href="wardrobe.html">👕</a>
+        </div>
 
             <div>
                 <h1>LAUNDRY</h1>
@@ -888,12 +933,82 @@ function createLaundryCard(item, index) {
             onclick="resetCount(${item.id}, '${escapeJS(item.name)}', this)"
         >
             ↻ RESET COUNT
-        </button>
+        </button><br><br>
+        <button
+                    class="action-btn delete-btn"
+                    onclick="deleteItem(${item.id}, '${escapeJS(item.name)}')"
+                >
+                    🗑 DELETE
+                </button>
+
+
 
     `;
 
 
     return card;
+
+}
+
+
+
+async function deleteItem(
+    id,
+    name
+) {
+
+    const confirmed =
+        confirm(
+            `Delete "${name}" from your wardrobe?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/clothing-item/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message ||
+                `Server returned ${response.status}`
+            );
+
+        }
+
+        await loadLaundry();
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "❌ Failed to delete item\n\n" +
+            error.message
+        );
+
+    }
 
 }
 
